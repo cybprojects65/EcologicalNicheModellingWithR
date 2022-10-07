@@ -41,7 +41,6 @@ Platichthys flesus
 Pleuronectes platessa
 Pomatomus saltatrix
 Prionace glauca
-Scophthalmus maximus
 Pterois miles
 Raja asterias
 Raja clavata
