@@ -1,0 +1,78 @@
+###########################################################
+######                                               ######
+###### Configuration File to set Workflow Parameters ######
+######                                               ######
+###########################################################
+#                         TIPS                            #
+#do not leave blank spaces after "="                      #
+#do not leave blank spaces after values                   #
+#for logical values use only T or F (not TRUE or FALSE)   #
+###########################################################
+
+EcologicalNicheModeler =F
+MaxEnt_converter =T
+CSV_converter =T
+EnsambleModeler =F
+AgreementIndex =F
+
+#AgreementIndex name
+index =BioIndex 
+
+#####################################
+# EcologicalNicheModeler Parameters #
+#####################################
+
+#General Parameters
+ths_sample =100
+abs_sample =10000 
+
+nativedistribution =T
+
+model_projection =F
+
+### Artificial Neural Network Parameters ###
+ANN_Active =T
+# Save the trained Artificial Neural Network
+Create_ANN_Rdata =T
+# rp - number of repetitions for the training - #20 gives more stability to the network and more independence of the initial training step
+rp =10
+# thld - threshold for minimum decrease in overall error, default 0.01 = 1%
+thld =0.001
+# stp - the maximum steps for the training of the neural network, default 1e+05
+stp =1e+06
+# alg - possible: backprop, rprop+, rprop-, sag, or slr
+alg =rprop-
+# act.fct - possible: "logistic" or "tanh"; linear.output must be 
+act.fct =logistic
+#20
+nfold =0
+# hidden knots
+hiddens =50,70,100,150,200
+	
+### Support Vector Machine Parameters ###
+SVM_Active =T
+# Save the trained Support Vector Machine
+Create_SVM_Rdata =T
+costlist =0.001,0.01,0.1,1,10,100
+kernellistx =linear,polynomial,radial,sigmoid
+kernellistwp =linear,radial,sigmoid
+# coef0list is used in "polynomial"and "sigmoid"
+coef0list =0,1 	
+# gammalist is used in "polynomial","radial", "sigmoid"
+gammalist =0.0001,0.001,0.01,0.1,1,10 
+# degreelist is used in "polynomial"
+degreelist =3,4  
+# nfold in ANN
+cross95 =20
+# It means "I will try to do not use data shrinking"	
+do_the_shrinking =F
+
+############################
+# CSV_converter Parameters #
+############################
+#Method Folder name (e.g. "AM" corresponds to AquaMaps)
+method =AM
+resolution =0.5
+set_threshold =0.6
+#If changing_thr =T a .txt file is needed for each .csv file reporting "Optimal decision threshold = "
+changing_thr =F
