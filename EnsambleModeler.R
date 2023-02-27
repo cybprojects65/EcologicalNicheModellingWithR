@@ -25,7 +25,7 @@ allmet<-gsub("./ENM/", "", allmet)
 #extract ID list
 all_IDs<-list.files(presence_data_folder)
 all_IDs<-gsub("_metadata.txt","",all_IDs)
-all_IDs<-gsub(".asc","",all_IDs)
+all_IDs<-gsub("\\.asc","",all_IDs)
 all_IDs<-gsub("_ann.Rdata","",all_IDs)
 all_IDs<-gsub("_svm.Rdata","",all_IDs)
 all_IDs<-unique(all_IDs)

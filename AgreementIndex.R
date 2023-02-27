@@ -18,7 +18,7 @@ methods_folder<- "./ENM"
 
 all_IDs<-list.files(Ensemble_folder)
 all_IDs<-gsub("ensemble_","",all_IDs)
-all_IDs<-gsub(".asc","",all_IDs)
+all_IDs<-gsub("\\.asc","",all_IDs)
 
 #set resolution from metadata
 allmet<-list.dirs(methods_folder)
