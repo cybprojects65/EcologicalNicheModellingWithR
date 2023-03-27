@@ -27,6 +27,7 @@ Create_AquaMaps_Rdata <- as.logical(WPFprops$"Create_AquaMaps_Rdata")
 Create_MAXENT_Rdata <- as.logical(WPFprops$"Create_MAXENT_Rdata")
 model_projection <- as.logical(WPFprops$"model_projection")
 
+
 if (model_projection){
   output_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder_projection)
   dir.create(output_folder, showWarnings = FALSE)
@@ -180,10 +181,6 @@ names(grid_of_points_enriched)<-c("x","y",input_column_names_codes)
 
 #####
 
-
-
-
-
 for (ID in all_IDs){
   cat("\nProcessing ID ",ID,"\n")
   presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
@@ -252,6 +249,7 @@ for (ID in all_IDs){
   
   if(SVM_Active == TRUE){
     if(model_projection == TRUE){
+      cat("Step 2: SVM projection session\n")
       raster_out_file_name = paste0(output_folder,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) ,".asc")
       svm_out_file_name = paste0(support_vector_machines_folder,paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_svm.Rdata")
       load(svm_out_file_name)
@@ -623,6 +621,7 @@ for (ID in all_IDs){
   ), fileConn)
   close(fileConn)
   }else{
+    cat("Step 4: ANN projection session\n")
     raster_out_file_name = paste0(output_folder,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
     neural_out_file_name = paste0(trained_neural_networks,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_ann.Rdata")
     metadata_file<-paste0(trained_neural_networks,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt")
@@ -779,7 +778,7 @@ for (ID in all_IDs){
     }
     
     if(model_projection == TRUE){
-      cat("\nStep 6: AquaMaps projection\n")
+      cat("\nStep 6: AquaMaps projection session\n")
       raster_out_file_name_AquaMaps = paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
       aquamaps_out_file_name = paste0(trained_aquamaps,paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_aquamaps.Rdata")
       load(aquamaps_out_file_name)
@@ -972,7 +971,7 @@ for (ID in all_IDs){
     }
     
     if(model_projection == TRUE){
-      cat("\nStep 8: MaxEnt projection\n")
+      cat("\nStep 8: MaxEnt projection session\n")
       raster_out_file_name_MaxEnt = paste0(output_folder,"/MaxEnt/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
       maxent_out_file_name = paste0(trained_maxent,paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_maxent.Rdata")
       load(maxent_out_file_name)

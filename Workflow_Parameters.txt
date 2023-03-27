@@ -51,8 +51,8 @@ stp =1e+06
 alg =rprop-
 # act.fct - possible: "logistic" or "tanh"; linear.output must be 
 act.fct =logistic
-#20
-nfold =0
+#nfolds
+nfold =1
 # hidden knots
 hiddens =50,70,100,150,200
 	
@@ -68,7 +68,7 @@ coef0list =0,1
 gammalist =0.0001,0.001,0.01,0.1,1,10 
 # degreelist is used in "polynomial"
 degreelist =3,4  
-# nfold in ANN
+# nfold
 cross95 =20
 # It means "I will try to do not use data shrinking"	
 do_the_shrinking =F
