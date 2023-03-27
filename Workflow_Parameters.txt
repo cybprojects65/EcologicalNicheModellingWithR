@@ -67,6 +67,10 @@ cross95 =20
 # It means "I will try to do not use data shrinking"	
 do_the_shrinking =F
 
+### AquaMaps Parameters ###
+AQUAMAPS_Active =T
+Create_AquaMaps_Rdata =T
+
 ############################
 # CSV_converter Parameters #
 ############################

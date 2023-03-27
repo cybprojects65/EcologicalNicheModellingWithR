@@ -11,24 +11,25 @@ WPFprops <- read.properties(Workflow_Parameters_File)
 #GENERAL PARAMETERS
 main_folder<-"."
 
-env_data_folder<-"./Environmental Parameters/Training"
+env_data_folder<-"./Environmental Parameters/2019"
 presence_data_folder<-"./Presence Records/"
 dir.create(file.path(main_folder, "ENM"), showWarnings = FALSE)
 output_folder<-"./ENM"
 
 ANN_Active <- as.logical(WPFprops$"ANN_Active")
 SVM_Active <- as.logical(WPFprops$"SVM_Active")
-
+AQUAMAPS_Active <- as.logical(WPFprops$"AQUAMAPS_Active")
 
 Create_ANN_Rdata <- as.logical(WPFprops$"Create_ANN_Rdata")  
 Create_SVM_Rdata <- as.logical(WPFprops$"Create_SVM_Rdata")
+Create_AquaMaps_Rdata <- as.logical(WPFprops$"Create_AquaMaps_Rdata")
 
 model_projection <- as.logical(WPFprops$"model_projection")
 projection_environmental_layers<- "./Environmental Parameters/Projection/"
 
 support_vector_machines_folder <-"./ENM/SVM/"
 trained_neural_networks <-"./ENM/ANN/"
-
+trained_aquamaps <-"./ENM/AquaMaps/"
 
 #general models parameters
 ths_sample<- as.double(WPFprops$"ths_sample")
@@ -163,6 +164,7 @@ for (ID in all_IDs){
   presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
   raster_out_file_name_ANN = paste0(output_folder,"/ANN/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
   raster_out_file_name_SVM = paste0(output_folder,"/SVM/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
+  raster_out_file_name_AquaMaps = paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
   
   # if(file.exists(raster_out_file_name_ANN)||file.exists(raster_out_file_name_SVM)){
   #   cat("Skipping\n")
@@ -217,9 +219,9 @@ for (ID in all_IDs){
   #####
  if(model_projection == TRUE){
    metadata_file<-paste0(support_vector_machines_folder,gsub(pattern = " ",replacement = "_",x = ID), "_metadata.txt")
-  metadata_output_file<-paste0(output_folder,"/SVM/",gsub(pattern = " ",replacement = "_",x = ID) , "_metadata.txt")
-  file.copy(from = metadata_file, to = metadata_output_file)
-}
+   metadata_output_file<-paste0(output_folder,"/SVM/",gsub(pattern = " ",replacement = "_",x = ID) , "_metadata.txt")
+   file.copy(from = metadata_file, to = metadata_output_file)
+  }
   
   if(SVM_Active == TRUE){
     if(model_projection == TRUE){
@@ -725,5 +727,136 @@ for (ID in all_IDs){
   cat("ID",ID,"ANN done.\n")
   }   
       
-
+  if(AQUAMAPS_Active == TRUE){
+    aqprob<-function(value,f_index,AQ_quantiles_per_feature){
+      quantiles<-AQ_quantiles_per_feature[[f_index]]
+      if (value<as.numeric(quantiles[1])){
+        return (0)
+      }
+      if (value>as.numeric(quantiles[5])){
+        return (0)
+      }
+      if (value<as.numeric(quantiles[2])){
+        if (as.numeric(quantiles[2]) == as.numeric(quantiles[1]) )
+          y = 1
+        else
+          y<-(value-as.numeric(quantiles[1]))/( as.numeric(quantiles[2])-as.numeric(quantiles[1]) )
+      }else if (value<=as.numeric(quantiles[4])){
+        return (1)
+      }else{
+        if (as.numeric(quantiles[4]) == as.numeric(quantiles[5]) )
+          y =1
+        else
+          y<-( (as.numeric(quantiles[4])-value) /( as.numeric(quantiles[5])-as.numeric(quantiles[4]) ) ) +1
+      }
+    }
+    
+    if(model_projection == TRUE){
+      cat("\nStep 6: AquaMaps projection\n")
+      raster_out_file_name_AquaMaps = paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
+      aquamaps_out_file_name = paste0(trained_aquamaps,paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_aquamaps.Rdata")
+      load(aquamaps_out_file_name)
+      
+      if(file.exists(raster_out_file_name_AquaMaps)){
+        stop("Cannot overwrite the original file\n")
+      }
+      presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
+      presence<-read.table(paste0(presence_data_folder,"/",presence_file),header = TRUE, sep=",")
+      presence$longitude_res<-coordinate_at_res(origin = min_x_in_raster,coordinate = presence$longitude, resolution = resolution)
+      presence$latitude_res<-coordinate_at_res(origin = min_y_in_raster,coordinate = presence$latitude, resolution = resolution)
+      
+    }else{
+      cat("\nStep 6: AquaMaps training\n")
+      
+      training_set_features_only_AQ<-subset(training_set, select = -c(x, y))
+      training_set_features_only_AQ<-training_set_features_only_AQ[which(training_set_features_only_AQ$t==1),]
+      training_set_features_only_AQ$t<-NULL
+      AQ_quantiles_per_feature<-list()
+      for (q in 1:ncol(training_set_features_only_AQ)){
+        qq<-quantile(training_set_features_only_AQ[,q])
+        AQ_quantiles_per_feature[[q]]<-qq
+      }
+    }    #end else training/projection 
+    probAQ<-list()
+    listcount<-1
+    grid_of_points_enriched_features_only_AQ<-subset(grid_of_points_enriched, select = -c(x, y),)
+    for (i in 1:nrow(grid_of_points_enriched_features_only_AQ)){
+      
+      featuresrow<-grid_of_points_enriched_features_only_AQ[i,]
+      if (length(which(is.na(featuresrow)))>0){
+        probAQ[[listcount]]<--9999
+      }else{
+        probs<-sapply(1:ncol(featuresrow), function(j){
+          aqp<-aqprob(as.numeric(featuresrow[j]),j,AQ_quantiles_per_feature)
+        },simplify = T)
+        probAQ_f<-prod(probs)
+        probAQ[[listcount]]<-probAQ_f
+      }
+      
+      listcount<-listcount+1
+    }
+    
+    prob_arr_aq<-array( unlist( probAQ ))
+    grid_of_points_AQ<-grid_of_points
+    grid_of_points_AQ$probability<-prob_arr_aq
+    
+    
+    #WRITE METADATA SVM
+    if(model_projection == FALSE){
+      fileConn<-file(paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
+      writeLines(c(
+        paste0("ID name = ",ID),
+        paste0("Spatial resolution = ",resolution),
+        paste0("Optimal decision threshold = 0.6")
+      ), fileConn)
+      close(fileConn)  
+    }
+    # Native Distribution
+    if (nativedistribution){
+      presence_aq<-
+        minx_aqm<-min(presence$longitude_res)
+      maxx_aqm<-max(presence$longitude_res)
+      miny_aqm<-min(presence$latitude_res)
+      maxy_aqm<-max(presence$latitude_res)
+      grid_of_points_AQ$probability[which((grid_of_points_AQ$x<minx_aqm) | (grid_of_points_AQ$x>maxx_aqm))]<--9999
+      grid_of_points_AQ$probability[which((grid_of_points_AQ$y<miny_aqm) | (grid_of_points_AQ$y>maxy_aqm))]<--9999
+    }
+    
+    #WRITE THE ASC file
+    cat("\nSTEP 7: Projecting AquaMaps...\n")
+    ypoints<-unique(grid_of_points$y)
+    xpoints<-unique(grid_of_points$x)
+    ncol_r<-length(xpoints)
+    nrow_r<-length(ypoints)
+    #create a new raster with the same extent and resolution of the first layer
+    ro <- raster(ncol=ncol_r, nrow=nrow_r)
+    length(values(ro))
+    res(ro) <- resolution
+    length(values(ro))
+    extent(ro)<-extent(first_raster_data)
+    #populate the matrix
+    values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
+    row_counter<-1
+    for (y_c in 1:(nrow_r)){
+      yp<-ypoints[y_c]
+      row_rast<-grid_of_points_AQ[which(grid_of_points_AQ$y == yp),]
+      row_rast<-row_rast[order(row_rast$x),]
+      values[(nrow_r-row_counter+1),]<-row_rast$probability[1:(ncol_r)]
+      row_counter<-row_counter+1
+      
+    }
+    values_vec<-as.vector(t(values))
+    values_vec[which(values_vec==0)]<--9999
+    values(ro)<-values_vec
+    NAvalue(ro)<- -9999
+    #save the raster
+    cat("Writing the output..\n")
+    writeRaster(ro, filename=raster_out_file_name_AquaMaps, format="ascii",overwrite=TRUE)
+    aquamaps_out_file_name = paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_aquamaps.Rdata")
+    if(Create_AquaMaps_Rdata){
+      save(AQ_quantiles_per_feature, file=aquamaps_out_file_name)
+    }
+    cat("ID",ID," AquaMaps done.\n")
+  } #end AquaMaps
+  
 }
