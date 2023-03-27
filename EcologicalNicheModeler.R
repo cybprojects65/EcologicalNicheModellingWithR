@@ -66,6 +66,11 @@ path<-paste0(output_folder,"/ANN")
 if(!dir.exists(path)) dir.create(path)
 }
 
+if(AQUAMAPS_Active==TRUE){
+  path<-paste0(output_folder,"/AquaMaps")
+  if(!dir.exists(path)) dir.create(path)
+}
+
 #list of ID
 all_IDs<-list.files(presence_data_folder)
 all_IDs<-gsub("Presence_","",all_IDs)
