@@ -9,27 +9,37 @@ Workflow_Parameters_File<- paste0("./Workflow_Parameters.txt")
 WPFprops <- read.properties(Workflow_Parameters_File)
 
 #GENERAL PARAMETERS
-main_folder<-"."
+env_data_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$env_data_folder)
+presence_data_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$presence_data_folder)
+training_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder)
+output_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder)
+projection_environmental_layers<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$projection_environmental_layers)
 
-env_data_folder<-"./Environmental Parameters/2019"
-presence_data_folder<-"./Presence Records/"
-dir.create(file.path(main_folder, "ENM"), showWarnings = FALSE)
-output_folder<-"./ENM"
+dir.create(output_folder, showWarnings = FALSE)
 
 ANN_Active <- as.logical(WPFprops$"ANN_Active")
 SVM_Active <- as.logical(WPFprops$"SVM_Active")
 AQUAMAPS_Active <- as.logical(WPFprops$"AQUAMAPS_Active")
-
+MAXENT_Active <- as.logical(WPFprops$"MAXENT_Active")
 Create_ANN_Rdata <- as.logical(WPFprops$"Create_ANN_Rdata")  
 Create_SVM_Rdata <- as.logical(WPFprops$"Create_SVM_Rdata")
 Create_AquaMaps_Rdata <- as.logical(WPFprops$"Create_AquaMaps_Rdata")
-
+Create_MAXENT_Rdata <- as.logical(WPFprops$"Create_MAXENT_Rdata")
 model_projection <- as.logical(WPFprops$"model_projection")
-projection_environmental_layers<- "./Environmental Parameters/Projection/"
 
-support_vector_machines_folder <-"./ENM/SVM/"
-trained_neural_networks <-"./ENM/ANN/"
-trained_aquamaps <-"./ENM/AquaMaps/"
+if (model_projection){
+  output_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder_projection)
+  dir.create(output_folder, showWarnings = FALSE)
+  Create_ANN_Rdata <- F
+  Create_SVM_Rdata <- F
+  Create_AquaMaps_Rdata <- F
+  Create_MAXENT_Rdata <- F
+}
+
+support_vector_machines_folder <-paste0(training_folder,"/SVM/")
+trained_neural_networks <-paste0(training_folder,"/ANN/")
+trained_aquamaps <-paste0(training_folder,"/AquaMaps/")
+trained_maxent <-paste0(training_folder,"/MaxEnt/")
 
 #general models parameters
 ths_sample<- as.double(WPFprops$"ths_sample")
@@ -71,6 +81,11 @@ if(AQUAMAPS_Active==TRUE){
   if(!dir.exists(path)) dir.create(path)
 }
 
+if(MAXENT_Active==TRUE){
+  path<-paste0(output_folder,"/MaxEnt")
+  if(!dir.exists(path)) dir.create(path)
+}
+
 #list of ID
 all_IDs<-list.files(presence_data_folder)
 all_IDs<-gsub("Presence_","",all_IDs)
@@ -80,15 +95,22 @@ all_IDs<-gsub("_"," ",all_IDs)
 #####
 #OCCURRENCE ENRICHMENT AND GRID PREPARATION
 cat("Step 1: Occurrence enrichment and grid preparation\n")
+maxentcache<-paste0(env_data_folder,"/maxent.cache")
+if (dir.exists(maxentcache))
+  unlink(maxentcache,recursive = T)
+maxentcache<-paste0(projection_environmental_layers,"/maxent.cache")
+if (dir.exists(maxentcache))
+  unlink(maxentcache,recursive = T)
 
 all_asc_files<-list.files(path=env_data_folder)
 
 if(model_projection == TRUE){
-
+  cat("Using projected environmental parameters\n")
   all_asc_files <-list.files(path=projection_environmental_layers)
   all_asc_files_original<-list.files(path=env_data_folder)
   env_p_original_idx<-1
 }
+
 first_raster_data<-NA
 grid_of_points<-c()
 input_column_names<-c()
@@ -168,25 +190,27 @@ for (ID in all_IDs){
   raster_out_file_name_ANN = paste0(output_folder,"/ANN/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
   raster_out_file_name_SVM = paste0(output_folder,"/SVM/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
   raster_out_file_name_AquaMaps = paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
+  raster_out_file_name_MaxEnt = paste0(output_folder,"/MaxEnt/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
   
   # if(file.exists(raster_out_file_name_ANN)||file.exists(raster_out_file_name_SVM)){
   #   cat("Skipping\n")
   #   next
   # }
    ####Grid preparation
+  
   if(model_projection == FALSE){
     indexa    <- sample(1:dim(grid_of_points_enriched)[1], abs_sample)
     absence1<-grid_of_points_enriched[indexa,]
     absence1$ID<-ID
     absence1<-data.frame(ID=absence1$ID,longitude=absence1$x, latitude = absence1$y)
     absence<-absence1#rbind(absence,absence1)
-    
     presence<-read.table(paste0(presence_data_folder,"/",presence_file),header = TRUE, sep=",")
+    presence$longitude_res<-coordinate_at_res(origin = min_x_in_raster+(resolution/2),coordinate = presence$longitude, resolution = resolution)
+    presence$latitude_res<-coordinate_at_res(origin = min_y_in_raster+(resolution/2),coordinate = presence$latitude, resolution = resolution)
+    
     #put the observations at the input resolution
     absence$longitude_res<-coordinate_at_res(origin = min_x_in_raster+(resolution/2),coordinate = absence$longitude, resolution = resolution)
     absence$latitude_res<-coordinate_at_res(origin = min_y_in_raster+(resolution/2),coordinate = absence$latitude, resolution = resolution)
-    presence$longitude_res<-coordinate_at_res(origin = min_x_in_raster+(resolution/2),coordinate = presence$longitude, resolution = resolution)
-    presence$latitude_res<-coordinate_at_res(origin = min_y_in_raster+(resolution/2),coordinate = presence$latitude, resolution = resolution)
     #prepare an x,y string for fast indexing
     absencexy<-paste0(absence$longitude_res,",",absence$latitude_res)
     presencexy<-paste0(presence$longitude_res,",",presence$latitude_res)
@@ -816,6 +840,7 @@ for (ID in all_IDs){
     }
     # Native Distribution
     if (nativedistribution){
+      cat("\nSTEP 6b: Adjusting AquaMaps for native distribution...\n")
       presence_aq<-
         minx_aqm<-min(presence$longitude_res)
       maxx_aqm<-max(presence$longitude_res)
@@ -861,5 +886,197 @@ for (ID in all_IDs){
     }
     cat("ID",ID," AquaMaps done.\n")
   } #end AquaMaps
+  
+  if(MAXENT_Active == TRUE){
+    
+    meprob<-function(maxentmodel,grid_of_points,ID){
+      max_out<-paste0(paste0(maxentmodel,gsub(" ","_",ID)),".asc")
+      asc_file<-raster(max_out)
+      grid_of_points$probability<-NULL
+      grid_of_points_extracted_me<-extract(x=asc_file,y=grid_of_points,method='simple')
+      grid_of_points_me<-grid_of_points
+      grid_of_points_me$probability<-grid_of_points_extracted_me
+      return(grid_of_points_me)
+    }
+    
+    get_thr_me<-function(maxentmodel,ID){
+      max_out<-paste0(paste0(maxentmodel,gsub(" ","_",ID)),".html")
+      fileBMPME<-readChar(max_out, file.info(max_out)$size)
+      METS<-gsub(".*>Training omission rate</th><tr align=center><td>","",fileBMPME)
+      METS<- gsub("</td><td>Fixed cumulative value 1.*","",METS)    
+      METS<- as.double(gsub(".*</td><td>","",METS))
+      return(METS)
+    }
+    
+    metraining<-function(ID,env_data_folder,output_folder){
+      cat("...training MaxEnt...\n")
+      presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
+      presence_data<-paste0(presence_data_folder,"/",presence_file)
+      maxent_out<-paste0(output_folder,"/MaxEnt/ME_",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "/")
+      if(!dir.exists(maxent_out)) dir.create(maxent_out)
+      
+      command<-paste0("java -jar ./max_ent_cyb.jar \"",presence_data,"\" \"",env_data_folder, "/\" \"",maxent_out,"\"")
+      
+      maxent_execution<-system(command, intern = T,
+                               ignore.stdout = FALSE, ignore.stderr = FALSE,
+                               wait = TRUE, input = NULL, show.output.on.console = TRUE,
+                               minimized = FALSE, invisible = TRUE, timeout = 0)
+      
+      execution_success<-(length(which(grepl(pattern="OK MaxEnt",x=maxent_execution)))>0)
+      cat("MaxEnt training OK=",execution_success,"\n")
+      if (!execution_success){
+        print(maxent_execution)
+        stop("MaxEnt was not successful")
+      }
+      return(maxent_out)
+    }
+    
+    meprojecting<-function(maxentmodel,ID,env_data_folder,output_folder){
+      
+      presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
+      presence_data<-paste0(presence_data_folder,"/",presence_file)
+      maxent_out_prj<-paste0(output_folder,"/MaxEnt/ME_",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_prj/")
+      lambda_file<-paste0(paste0(maxentmodel,gsub(" ","_",ID)),".lambdas")
+      if(!dir.exists(maxent_out_prj)) 
+        dir.create(maxent_out_prj)
+      
+      maxent_out_prj_asc<-paste0(paste0(maxent_out_prj,gsub(" ","_",ID)),".asc")
+      
+      #java -cp max_ent_cyb.jar org.gcube.datanalysis.ecomod.MainProjecting ./Presence_Abudefduf_saxatilis.csv ./env_pars/ ./out_programatic/ ./out_programatic/Abudefduf_saxatilis.lambdas ./env_pars_2050/ ./test.asc
+      
+      command<-paste0("java -cp max_ent_cyb.jar org.gcube.datanalysis.ecomod.MainProjecting \"",
+                      presence_data,"\" \"",env_data_folder, "/\" \"",maxentmodel,"\" \"",lambda_file,"\" \"",env_data_folder,"\" \"",maxent_out_prj_asc,"\"")
+      
+      maxent_execution<-system(command, intern = T,
+                               ignore.stdout = FALSE, ignore.stderr = FALSE,
+                               wait = TRUE, input = NULL, show.output.on.console = TRUE,
+                               minimized = FALSE, invisible = TRUE, timeout = 0)
+      
+      execution_success<-(length(which(grepl(pattern="OK MaxEnt",x=maxent_execution)))>0)
+      cat("MaxEnt projection OK=",execution_success,"\n")
+      if (!execution_success){
+        print(maxent_execution)
+        stop("MaxEnt was not successful")
+      }
+      
+      max_out_previous<-paste0(paste0(maxentmodel,gsub(" ","_",ID)),".html")
+      max_out_new<-paste0(paste0(maxent_out_prj,gsub(" ","_",ID)),".html")
+      file.copy(max_out_previous, max_out_new)
+      
+      max_out_previous<-paste0(paste0(maxentmodel,gsub(" ","_",ID)),".lambdas")
+      max_out_new<-paste0(paste0(maxent_out_prj,gsub(" ","_",ID)),".lambdas")
+      file.copy(max_out_previous, max_out_new)
+      
+      return(maxent_out_prj)
+      
+    }
+    
+    if(model_projection == TRUE){
+      cat("\nStep 8: MaxEnt projection\n")
+      raster_out_file_name_MaxEnt = paste0(output_folder,"/MaxEnt/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
+      maxent_out_file_name = paste0(trained_maxent,paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_maxent.Rdata")
+      load(maxent_out_file_name)
+      
+      presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
+      presence<-read.table(paste0(presence_data_folder,"/",presence_file),header = TRUE, sep=",")
+      presence$longitude_res<-coordinate_at_res(origin = min_x_in_raster,coordinate = presence$longitude, resolution = resolution)
+      presence$latitude_res<-coordinate_at_res(origin = min_y_in_raster,coordinate = presence$latitude, resolution = resolution)
+      
+      if(file.exists(raster_out_file_name_MaxEnt)){
+        stop("Cannot overwrite the original file\n")
+      }
+      maxentmodel<-meprojecting(maxentmodel,ID,projection_environmental_layers,output_folder)
+    }else{
+      cat("\nStep 8: MaxEnt training\n")
+      maxentmodel<-metraining(ID,env_data_folder,output_folder)
+    }#end else training/projection 
+    
+    probME<-list()
+    listcount<-1
+    grid_of_points_ME<-meprob(maxentmodel,grid_of_points,ID)
+    decision_treshold<-get_thr_me(maxentmodel,ID)
+    
+    #WRITE METADATA ME
+    
+    fileConn<-file(paste0(output_folder,"/MaxEnt/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
+    writeLines(c(
+      paste0("ID name = ",ID),
+      paste0("Spatial resolution = ",resolution),
+      #Fixed cumulative value 1.
+      paste0("Optimal decision threshold = ",decision_treshold)
+    ), fileConn)
+    close(fileConn)  
+    
+    # Native Distribution
+    if (nativedistribution){
+      cat("\nSTEP 8b: Adjusting the projection for native distribution...\n")
+      #calculate average distances between the samples
+      distances<-sapply(1:length(presence$longitude_res), function(i){
+        p_long<-presence$longitude_res[i]
+        p_lat<-presence$latitude_res[i]
+        dx<-(presence$longitude_res-p_long)
+        dy<-(presence$latitude_res-p_lat)
+        sqrd<-(dx*dx)+(dy*dy)
+        d<-mean(sqrt(sqrd))
+        return (d)
+      },simplify = T)
+      sigma<-sd(distances)
+      
+      #get minimum distances between the grid and the presence samples
+      mindistance<-sapply(1:length(grid_of_points_ME$probability), function(i){
+        p_long<-grid_of_points_ME$x[i]
+        p_lat<-grid_of_points_ME$y[i]
+        dx<-(presence$longitude_res-p_long)
+        dy<-(presence$latitude-p_lat)
+        sqrd<-(dx*dx)+(dy*dy)
+        d<-min(sqrt(sqrd))
+        return (d)
+      },simplify = T)
+      
+      
+      #setup probability weights
+      weights<-dnorm(mindistance,0,sigma)/dnorm(0,0,sigma)
+      weights[which(mindistance<=sigma)]<-1
+      #weight probability by distance from presence points
+      na_points<-which( (grid_of_points_ME$probability==-9999) | (is.na(grid_of_points_ME$probability)) )
+      grid_of_points_ME$probability[-na_points]<-grid_of_points_ME$probability[-na_points]*weights[-na_points]     
+    }
+    
+    #WRITE THE ASC file
+    cat("\nSTEP 9: Projecting MaxEnt...\n")
+    ypoints<-unique(grid_of_points$y)
+    xpoints<-unique(grid_of_points$x)
+    ncol_r<-length(xpoints)
+    nrow_r<-length(ypoints)
+    #create a new raster with the same extent and resolution of the first layer
+    ro <- raster(ncol=ncol_r, nrow=nrow_r)
+    length(values(ro))
+    res(ro) <- resolution
+    length(values(ro))
+    extent(ro)<-extent(first_raster_data)
+    #populate the matrix
+    values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
+    row_counter<-1
+    for (y_c in 1:(nrow_r)){
+      yp<-ypoints[y_c]
+      row_rast<-grid_of_points_ME[which(grid_of_points_ME$y == yp),]
+      row_rast<-row_rast[order(row_rast$x),]
+      values[(nrow_r-row_counter+1),]<-row_rast$probability[1:(ncol_r)]
+      row_counter<-row_counter+1
+    }
+    values_vec<-as.vector(t(values))
+    values_vec[which(values_vec==0)]<--9999
+    values(ro)<-values_vec
+    NAvalue(ro)<- -9999
+    #save the raster
+    cat("Writing the output..\n")
+    writeRaster(ro, filename=raster_out_file_name_MaxEnt, format="ascii",overwrite=TRUE)
+    maxent_out_file_name = paste0(output_folder,"/MaxEnt/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_maxent.Rdata")
+    if(Create_MAXENT_Rdata){
+      save(maxentmodel, file=maxent_out_file_name)
+    }
+    cat("ID",ID," MaxEnt done.\n")
+  } #end MaxEnt
+  
   
 }

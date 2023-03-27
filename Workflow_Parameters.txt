@@ -9,6 +9,12 @@
 #for logical values use only T or F (not TRUE or FALSE)   #
 ###########################################################
 
+env_data_folder="./Environmental Parameters/2019"
+presence_data_folder="./Presence Records/"
+output_folder="./ENM"
+projection_environmental_layers="./Environmental Parameters 2050 RCP85/"
+output_folder_projection="./ENM_p"
+
 EcologicalNicheModeler =F
 MaxEnt_converter =T
 CSV_converter =T
@@ -25,13 +31,14 @@ index =BioIndex
 #General Parameters
 ths_sample =100
 abs_sample =10000 
-
 nativedistribution =T
-
 model_projection =F
+SVM_Active =T
+ANN_Active =T
+AQUAMAPS_Active =T
+MAXENT_Active =T
 
 ### Artificial Neural Network Parameters ###
-ANN_Active =T
 # Save the trained Artificial Neural Network
 Create_ANN_Rdata =T
 # rp - number of repetitions for the training - #20 gives more stability to the network and more independence of the initial training step
@@ -50,7 +57,6 @@ nfold =0
 hiddens =50,70,100,150,200
 	
 ### Support Vector Machine Parameters ###
-SVM_Active =T
 # Save the trained Support Vector Machine
 Create_SVM_Rdata =T
 costlist =0.001,0.01,0.1,1,10,100
@@ -68,8 +74,10 @@ cross95 =20
 do_the_shrinking =F
 
 ### AquaMaps Parameters ###
-AQUAMAPS_Active =T
 Create_AquaMaps_Rdata =T
+
+### MaxEnt Parameters ###
+Create_MAXENT_Rdata =T
 
 ############################
 # CSV_converter Parameters #

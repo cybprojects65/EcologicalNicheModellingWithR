@@ -1,3 +1,0 @@
-ID name = Abudefduf saxatilis
-Spatial resolution = 0.5
-Optimal decision threshold = 0.6
