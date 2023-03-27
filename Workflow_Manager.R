@@ -10,15 +10,15 @@ if (EcologicalNicheModeler == TRUE){
   source("./EcologicalNicheModeler.R")
 }
 
-MaxEnt_converter <- as.logical(WPFprops$"MaxEnt_converter")
-if (MaxEnt_converter == TRUE){
-  source("./MaxEnt_converter.R")
-}
+#MaxEnt_converter <- as.logical(WPFprops$"MaxEnt_converter")
+#if (MaxEnt_converter == TRUE){
+ # source("./MaxEnt_converter.R")
+#}
 
-CSV_converter <- as.logical(WPFprops$"CSV_converter")
-if (CSV_converter == TRUE){
-  source("./CSV_converter.R")
-}
+#CSV_converter <- as.logical(WPFprops$"CSV_converter")
+#if (CSV_converter == TRUE){
+ # source("./CSV_converter.R")
+#}
 
 EnsambleModeler <- as.logical(WPFprops$"EnsambleModeler")
 if (EnsambleModeler == TRUE){
