@@ -126,8 +126,6 @@ for (file in all_asc_files){
     grid_of_points<-expand.grid(x = xseq, y = yseq)#combine the x and y coordinate to generate pairs
     #initialise the projection grid of parameters with just the coordinates
     grid_of_points_enriched<-grid_of_points
-    
-    
   }
   
   #plot(asc_file_norm)
