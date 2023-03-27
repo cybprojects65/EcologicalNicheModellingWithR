@@ -801,7 +801,7 @@ for (ID in all_IDs){
     grid_of_points_AQ$probability<-prob_arr_aq
     
     
-    #WRITE METADATA SVM
+    #WRITE METADATA AQ
     if(model_projection == FALSE){
       fileConn<-file(paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
       writeLines(c(
