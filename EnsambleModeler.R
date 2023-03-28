@@ -14,12 +14,15 @@ main_output_folder<-"."
 new_folder<- "Ensemble"
 dir.create(file.path(main_output_folder, new_folder), showWarnings = FALSE)
 output_folder<-"./Ensemble"
-methods_folder<- "./ENM"
+
+model_projection <- as.logical(WPFprops$"model_projection")
+if (model_projection == T){
+  methods_folder<- gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder_projection)
+} else methods_folder<- gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder)
 
 #extract methods list
-allmet<-list.dirs(methods_folder)
+allmet<-list.dirs(methods_folder, recursive = FALSE)
 presence_data_folder<- allmet[2]
-allmet<- allmet[-1]
 allmet<-gsub("./ENM/", "", allmet)
 
 #extract ID list
@@ -28,6 +31,7 @@ all_IDs<-gsub("_metadata.txt","",all_IDs)
 all_IDs<-gsub("\\.asc","",all_IDs)
 all_IDs<-gsub("_ann.Rdata","",all_IDs)
 all_IDs<-gsub("_svm.Rdata","",all_IDs)
+all_IDs<-gsub("_aquamaps.Rdata","",all_IDs)
 all_IDs<-unique(all_IDs)
 
 # ensamble data preparation
@@ -87,19 +91,19 @@ for (ID in all_IDs){
       
       #initialise the projection grid of parameters with just the coordinates
       grid_of_points_enriched<-grid_of_points
-      }
-      
+    }
+    
     
     #extract raster values for the observations and the grid
     grid_of_points_extracted<-extract(x=asc_file,y=grid_of_points,method='simple')
     #enrich the columns of the training set and the grid
     column_name<-models[model]
     input_column_names<-c(input_column_names,column_name)
- 
+    
     grid_of_points_enriched[column_name]<-grid_of_points_extracted
   }
-
- #ensamble with threshold
+  
+  #ensamble with threshold
   cat("\nAssessing presence by threshold and sum calculation\n")
   
   TSs<-c()
@@ -179,5 +183,5 @@ for (ID in all_IDs){
   
   #save the raster
   writeRaster(ro, filename=paste0(output_folder,"/ensemble_",ID), format="ascii",overwrite=TRUE) 
-
+  
 }

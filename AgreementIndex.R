@@ -8,20 +8,24 @@ Workflow_Parameters_File<- paste0("./Workflow_Parameters.txt")
 WPFprops <- read.properties(Workflow_Parameters_File)
 
 #input parameters
-index <- "BioIndex"
+index <- WPFprops$"index"
 cat(paste0("\n",index," calculation\n"))
 
 #general parameters
 Ensemble_folder <- "./Ensemble"
 output_folder <- "."
-methods_folder<- "./ENM"
+
+model_projection <- as.logical(WPFprops$"model_projection")
+if (model_projection == T){
+  methods_folder<- gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder_projection)
+} else methods_folder<- gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder)
 
 all_IDs<-list.files(Ensemble_folder)
 all_IDs<-gsub("ensemble_","",all_IDs)
 all_IDs<-gsub("\\.asc","",all_IDs)
 
 #set resolution from metadata
-allmet<-list.dirs(methods_folder)
+allmet<-list.dirs(methods_folder, recursive = FALSE)
 method<- allmet[2]
 BMPFile<- paste0(method,"/",all_IDs[1],"_metadata.txt")
 BMPprops <- read.properties(BMPFile)
@@ -39,8 +43,11 @@ xseq<-seq(from=min_x_in_raster+(resolution/2),to=max_x_in_raster-(resolution/2),
 yseq<-seq(from=min_y_in_raster+(resolution/2),to=max_y_in_raster-(resolution/2),by=resolution)
 grid_of_points<-expand.grid(x = xseq, y = yseq)
 
-#set threshold and function         
-TS<-length(allmet)-2
+#set threshold and function
+nativedistribution <- as.logical(WPFprops$"nativedistribution")
+if (nativedistribution == T){
+  TS<-length(allmet)-1
+} else TS<-1
 
 cat("\nAssessing presence by threshold = ",TS,"\n")
 for (ID in all_IDs){
