@@ -828,15 +828,14 @@ for (ID in all_IDs){
     
     
     #WRITE METADATA AQ
-    if(model_projection == FALSE){
-      fileConn<-file(paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
+    fileConn<-file(paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
       writeLines(c(
         paste0("ID name = ",ID),
         paste0("Spatial resolution = ",resolution),
         paste0("Optimal decision threshold = 0.6")
       ), fileConn)
       close(fileConn)  
-    }
+    
     # Native Distribution
     if (nativedistribution){
       cat("\nSTEP 6b: Adjusting AquaMaps for native distribution...\n")
