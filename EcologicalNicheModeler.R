@@ -68,13 +68,13 @@ hiddens <- as.numeric(unlist(strsplit(WPFprops$"hiddens", split=",")))
 
 #creation of output folder for any model
 if(SVM_Active == TRUE){
-path<-paste0(output_folder,"/SVM")
-if(!dir.exists(path)) dir.create(path)
+  path<-paste0(output_folder,"/SVM")
+  if(!dir.exists(path)) dir.create(path)
 }
 
 if(ANN_Active==TRUE){
-path<-paste0(output_folder,"/ANN")
-if(!dir.exists(path)) dir.create(path)
+  path<-paste0(output_folder,"/ANN")
+  if(!dir.exists(path)) dir.create(path)
 }
 
 if(AQUAMAPS_Active==TRUE){
@@ -159,12 +159,12 @@ for (file in all_asc_files){
   #plot(asc_file_norm)
   
   #extract raster values for the observations and the grid
-
+  
   grid_of_points_extracted<-extract(x=asc_file_norm,y=grid_of_points,method='simple')
   #enrich the columns of the training set and the grid
   column_name<-gsub(".asc","",file)
   input_column_names<-c(input_column_names,tolower(column_name))
-
+  
   grid_of_points_enriched[column_name]<-grid_of_points_extracted
   if(model_projection == TRUE){
     env_p_original_idx<-env_p_original_idx+1
@@ -175,7 +175,7 @@ input_column_names_codes<-seq(1:(length(input_column_names)))
 input_column_names_codes<-paste0("f",input_column_names_codes)
 names(grid_of_points_enriched)<-c("x","y",input_column_names_codes)
 
-  grid_of_points_enriched_proj<-subset(grid_of_points_enriched, select = -c(x, y))
+grid_of_points_enriched_proj<-subset(grid_of_points_enriched, select = -c(x, y))
 
 
 
@@ -193,7 +193,7 @@ for (ID in all_IDs){
   #   cat("Skipping\n")
   #   next
   # }
-   ####Grid preparation
+  ####Grid preparation
   
   if(model_projection == FALSE){
     indexa    <- sample(1:dim(grid_of_points_enriched)[1], abs_sample)
@@ -241,10 +241,10 @@ for (ID in all_IDs){
   }
   
   #####
- if(model_projection == TRUE){
-   metadata_file<-paste0(support_vector_machines_folder,gsub(pattern = " ",replacement = "_",x = ID), "_metadata.txt")
-   metadata_output_file<-paste0(output_folder,"/SVM/",gsub(pattern = " ",replacement = "_",x = ID) , "_metadata.txt")
-   file.copy(from = metadata_file, to = metadata_output_file)
+  if(model_projection == TRUE){
+    metadata_file<-paste0(support_vector_machines_folder,gsub(pattern = " ",replacement = "_",x = ID), "_metadata.txt")
+    metadata_output_file<-paste0(output_folder,"/SVM/",gsub(pattern = " ",replacement = "_",x = ID) , "_metadata.txt")
+    file.copy(from = metadata_file, to = metadata_output_file)
   }
   
   if(SVM_Active == TRUE){
@@ -274,506 +274,522 @@ for (ID in all_IDs){
       grid_of_pointssp$probability<-probability_on_grid_of_points_enriched_proj_N
       grid_of_pointssp[rowSums(is.na(grid_of_pointssp)) > 0,3]<- -9999
       
-       }else{
-  cat("Step 2: SVM training with multiple parametrization\n")
-  
-  training_set_features_only_SVM<-subset(training_set, select = -c(x, y))
-  grid_of_points_enriched_features_only<-subset(grid_of_points_enriched, select = -c(x, y),)
-  
-
-  f <- as.formula(paste("t", "~", paste(input_column_names_codes, collapse = " + ") ))
-  set.seed(20)
-  
-  #initialise features that will record the optimal scores
-  opt_cost<- "NA"
-  opt_gamma<- "NA"
-  opt_coef0 <- "NA"
-  opt_degree <- "NA"
-  opt_kernel <- ""
-  
-  opt_accuracy<-0
-  opt_accuracy_self<-0
-  opt_threshold<-0
-  
-  
-  tuned <- tune(svm, t ~., data = training_set_features_only_SVM,ranges=list(kernel=kernellist, cost = costlist, gamma = gammalist, coef0=coef0list,degree=degreelist), scale = TRUE)
-  print(tuned)
-  
-  
-  
-  opt_kernel <- tuned$best.parameters$kernel
-  
-  if(opt_kernel == "linear"){
-    opt_kernel <- "linear"
-    print(" linear kernel on!")
-    opt_cost<- tuned$best.parameters$cost
-    svmfit <- svm(t ~., data = training_set_features_only_SVM, kernel = "linear", cost = opt_cost , scale = FALSE,probability=TRUE, cross=cross95,shrinking=do_the_shrinking) #model call
-  }
-  
-  if(opt_kernel == "polynomial"){
-    opt_kernel <- "polynomial"
-    print(" polynomial kernel on!")
-    opt_cost<- tuned$best.parameters$cost
-    opt_gamma<- tuned$best.parameters$gamma
-    opt_degree <- tuned$best.parameters$degree
-    opt_coef0 <- tuned$best.parameters$coef0
-    
-    svmfit <- svm(t ~., data = training_set_features_only_SVM, kernel = "polynomial", cost = opt_cost ,gamma= opt_gamma,degree=opt_degree,coef0= opt_coef0, scale = FALSE,probability=TRUE, cross=cross95,shrinking=do_the_shrinking) #model call
-  }
-  
-  if(opt_kernel == "radial"){
-    opt_kernel <-"radial"
-    print(" radial kernel on!")
-    opt_cost<- tuned$best.parameters$cost
-    opt_gamma <- tuned$best.parameters$gamma
-    
-    svmfit <- svm(t ~., data = training_set_features_only_SVM, kernel = "radial", cost = opt_cost ,gamma= opt_gamma, scale = FALSE, cross=cross95,probability=TRUE,shrinking=do_the_shrinking) #model call
-  }
-  
-  if(opt_kernel == "sigmoid"){
-    opt_kernel <- "sigmoid"
-    print(" sigmoid kernel on!")
-    opt_cost<- tuned$best.parameters$cost
-    opt_gamma<- tuned$best.parameters$gamma
-    opt_coef0 <- tuned$best.parameters$coef0
-    
-    svmfit <- svm(t ~., data = training_set_features_only_SVM, kernel = "sigmoid", cost = opt_cost ,gamma= opt_gamma,coef0= opt_coef0, scale = FALSE,probability=TRUE, cross=cross95,shrinking=do_the_shrinking) #model call
-  }
-  
-  print(svmfit)
-  #add probability from model to test set
-  training_set_features_only_w_probability <- training_set_features_only_SVM
-  prediction_on_training_set <- predict(svmfit, training_set_features_only_w_probability, probability = TRUE)
-  training_set_features_only_w_probability$probability<-prediction_on_training_set
-  
-  #project the optimal SVM on the grid
-  grid_of_points_enriched_features_only_w_probability<-grid_of_points_enriched_features_only
-  prediction_on_grid_of_point_enriched <- predict(svmfit, grid_of_points_enriched_features_only_w_probability, probability = TRUE, na.action = na.exclude)
-  #min max normalization on grid prediction
-  min_v_in_raster<-min(prediction_on_grid_of_point_enriched,na.rm = TRUE)
-  max_v_in_raster<-max(prediction_on_grid_of_point_enriched,na.rm = TRUE)
-  prediction_on_grid_of_point_enriched_N<-(prediction_on_grid_of_point_enriched - min_v_in_raster) /(max_v_in_raster-min_v_in_raster)
-  
-  grid_of_points_enriched_features_only_w_probability$probability<-prediction_on_grid_of_point_enriched_N
-  grid_of_points_w_probability <- grid_of_points
-  grid_of_points_w_probability$probability<-prediction_on_grid_of_point_enriched_N
-  grid_of_points_w_probability[rowSums(is.na(grid_of_points_w_probability)) > 0,3]<- -9999
-  
-  
-  
-  #tuning the best threshold 
-  training_set_features_only_w_probability_N <- training_set_features_only_SVM
-  prediction_on_training_set_N <- (prediction_on_training_set - min_v_in_raster) /(max_v_in_raster-min_v_in_raster)
-  training_set_features_only_w_probability_N$probability<-prediction_on_training_set_N
-  
-  decision_thresholds<-as.numeric(quantile( training_set_features_only_w_probability_N$probability,probs=c(0.01,0.05,0.1,0.2,0.5,0.8))) #take 1% of the training set out
-  opt_accuracy<-0
-  opt_threshold<-0
-  #loop on decision thresholds testing
-  for (decision_threshold in decision_thresholds){
-    training_set_features_only_w_probability_N$detected<-F
-    training_set_features_only_w_probability_N$detected[which( ( training_set_features_only_w_probability_N$t ==0 & training_set_features_only_w_probability_N$probability<decision_threshold) | 
-                                                                 (training_set_features_only_w_probability_N$t ==1 & training_set_features_only_w_probability_N$probability>decision_threshold) ) ]<-T
-    accuracy<- length(which(training_set_features_only_w_probability_N$detected))/length(training_set_features_only_w_probability_N$detected)
-    #record the best threshold and gained accuracy
-    if (opt_accuracy<accuracy){
-      opt_accuracy=accuracy
-      opt_threshold<-decision_threshold
-    }
-    
-  }#end loop on decision thresholds###################################
-  cat("Accuracy selftest best result =", opt_accuracy*100,"%","(thr:",opt_threshold,")","\n")
-  
-  
-       }  #end else training/projection 
-  #WRITE METADATA SVM
+    }else{
+      cat("Step 2: SVM training with multiple parametrization\n")
+      
+      training_set_features_only_SVM<-subset(training_set, select = -c(x, y))
+      grid_of_points_enriched_features_only<-subset(grid_of_points_enriched, select = -c(x, y),)
+      
+      
+      f <- as.formula(paste("t", "~", paste(input_column_names_codes, collapse = " + ") ))
+      set.seed(20)
+      
+      #initialise features that will record the optimal scores
+      opt_cost<- "NA"
+      opt_gamma<- "NA"
+      opt_coef0 <- "NA"
+      opt_degree <- "NA"
+      opt_kernel <- ""
+      
+      opt_accuracy<-0
+      opt_accuracy_self<-0
+      opt_threshold<-0
+      
+      
+      tuned <- tune(svm, t ~., data = training_set_features_only_SVM,ranges=list(kernel=kernellist, cost = costlist, gamma = gammalist, coef0=coef0list,degree=degreelist), scale = TRUE)
+      print(tuned)
+      
+      
+      
+      opt_kernel <- tuned$best.parameters$kernel
+      
+      if(opt_kernel == "linear"){
+        opt_kernel <- "linear"
+        print(" linear kernel on!")
+        opt_cost<- tuned$best.parameters$cost
+        svmfit <- svm(t ~., data = training_set_features_only_SVM, kernel = "linear", cost = opt_cost , scale = FALSE,probability=TRUE, cross=cross95,shrinking=do_the_shrinking) #model call
+      }
+      
+      if(opt_kernel == "polynomial"){
+        opt_kernel <- "polynomial"
+        print(" polynomial kernel on!")
+        opt_cost<- tuned$best.parameters$cost
+        opt_gamma<- tuned$best.parameters$gamma
+        opt_degree <- tuned$best.parameters$degree
+        opt_coef0 <- tuned$best.parameters$coef0
+        
+        svmfit <- svm(t ~., data = training_set_features_only_SVM, kernel = "polynomial", cost = opt_cost ,gamma= opt_gamma,degree=opt_degree,coef0= opt_coef0, scale = FALSE,probability=TRUE, cross=cross95,shrinking=do_the_shrinking) #model call
+      }
+      
+      if(opt_kernel == "radial"){
+        opt_kernel <-"radial"
+        print(" radial kernel on!")
+        opt_cost<- tuned$best.parameters$cost
+        opt_gamma <- tuned$best.parameters$gamma
+        
+        svmfit <- svm(t ~., data = training_set_features_only_SVM, kernel = "radial", cost = opt_cost ,gamma= opt_gamma, scale = FALSE, cross=cross95,probability=TRUE,shrinking=do_the_shrinking) #model call
+      }
+      
+      if(opt_kernel == "sigmoid"){
+        opt_kernel <- "sigmoid"
+        print(" sigmoid kernel on!")
+        opt_cost<- tuned$best.parameters$cost
+        opt_gamma<- tuned$best.parameters$gamma
+        opt_coef0 <- tuned$best.parameters$coef0
+        
+        svmfit <- svm(t ~., data = training_set_features_only_SVM, kernel = "sigmoid", cost = opt_cost ,gamma= opt_gamma,coef0= opt_coef0, scale = FALSE,probability=TRUE, cross=cross95,shrinking=do_the_shrinking) #model call
+      }
+      
+      print(svmfit)
+      #add probability from model to test set
+      training_set_features_only_w_probability <- training_set_features_only_SVM
+      prediction_on_training_set <- predict(svmfit, training_set_features_only_w_probability, probability = TRUE)
+      training_set_features_only_w_probability$probability<-prediction_on_training_set
+      
+      #project the optimal SVM on the grid
+      grid_of_points_enriched_features_only_w_probability<-grid_of_points_enriched_features_only
+      prediction_on_grid_of_point_enriched <- predict(svmfit, grid_of_points_enriched_features_only_w_probability, probability = TRUE, na.action = na.exclude)
+      #min max normalization on grid prediction
+      min_v_in_raster<-min(prediction_on_grid_of_point_enriched,na.rm = TRUE)
+      max_v_in_raster<-max(prediction_on_grid_of_point_enriched,na.rm = TRUE)
+      prediction_on_grid_of_point_enriched_N<-(prediction_on_grid_of_point_enriched - min_v_in_raster) /(max_v_in_raster-min_v_in_raster)
+      
+      grid_of_points_enriched_features_only_w_probability$probability<-prediction_on_grid_of_point_enriched_N
+      grid_of_points_w_probability <- grid_of_points
+      grid_of_points_w_probability$probability<-prediction_on_grid_of_point_enriched_N
+      grid_of_points_w_probability[rowSums(is.na(grid_of_points_w_probability)) > 0,3]<- -9999
+      
+      
+      
+      #tuning the best threshold 
+      training_set_features_only_w_probability_N <- training_set_features_only_SVM
+      prediction_on_training_set_N <- (prediction_on_training_set - min_v_in_raster) /(max_v_in_raster-min_v_in_raster)
+      training_set_features_only_w_probability_N$probability<-prediction_on_training_set_N
+      
+      decision_thresholds<-as.numeric(quantile( training_set_features_only_w_probability_N$probability,probs=c(0.01,0.05,0.1,0.2,0.5,0.8))) #take 1% of the training set out
+      opt_accuracy<-0
+      opt_threshold<-0
+      #loop on decision thresholds testing
+      for (decision_threshold in decision_thresholds){
+        training_set_features_only_w_probability_N$detected<-F
+        training_set_features_only_w_probability_N$detected[which( ( training_set_features_only_w_probability_N$t ==0 & training_set_features_only_w_probability_N$probability<decision_threshold) | 
+                                                                     (training_set_features_only_w_probability_N$t ==1 & training_set_features_only_w_probability_N$probability>decision_threshold) ) ]<-T
+        accuracy<- length(which(training_set_features_only_w_probability_N$detected))/length(training_set_features_only_w_probability_N$detected)
+        #record the best threshold and gained accuracy
+        if (opt_accuracy<accuracy){
+          opt_accuracy=accuracy
+          opt_threshold<-decision_threshold
+        }
+        
+      }#end loop on decision thresholds###################################
+      cat("Accuracy selftest best result =", opt_accuracy*100,"%","(thr:",opt_threshold,")","\n")
+      
+      
+    }  #end else training/projection 
+    #WRITE METADATA SVM
     if(model_projection == FALSE){
-  fileConn<-file(paste0(output_folder,"/SVM/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
-  writeLines(c(
-    paste0("ID name = ",ID),
-    paste0("Spatial resolution = ",resolution),
-    paste0("Number of folders of cross validation = ",cross95),
-    paste0("Shrinking-heuristics = ",do_the_shrinking),
-    paste0("Optimal overall accuracy selftest = ", opt_accuracy*100),
-    paste0("Optimal decision threshold = ",opt_threshold),
-    paste0("Optimal kernel = ",opt_kernel),
-    paste0("Optimal cost = ",opt_cost),
-    paste0("Optimal gamma = ",opt_gamma),
-    paste0("Optimal coef0 = ",opt_coef0),
-    paste0("Optimal degree = ",opt_degree)
-  ), fileConn)
-  close(fileConn)  
+      fileConn<-file(paste0(output_folder,"/SVM/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
+      writeLines(c(
+        paste0("ID name = ",ID),
+        paste0("Spatial resolution = ",resolution),
+        paste0("Number of folders of cross validation = ",cross95),
+        paste0("Shrinking-heuristics = ",do_the_shrinking),
+        paste0("Optimal overall accuracy selftest = ", opt_accuracy*100),
+        paste0("Optimal decision threshold = ",opt_threshold),
+        paste0("Optimal kernel = ",opt_kernel),
+        paste0("Optimal cost = ",opt_cost),
+        paste0("Optimal gamma = ",opt_gamma),
+        paste0("Optimal coef0 = ",opt_coef0),
+        paste0("Optimal degree = ",opt_degree)
+      ), fileConn)
+      close(fileConn)  
     }
-  # Native Distribution
-  if (nativedistribution){
-    cat("\nSTEP 2b: Adjusting the projection for native distribution...\n")
-    #calculate average distances between the samples
-    distances<-sapply(1:length(presence$longitude_res), function(i){
-      p_long<-presence$longitude_res[i]
-      p_lat<-presence$latitude_res[i]
-      dx<-(presence$longitude_res-p_long)
-      dy<-(presence$latitude_res-p_lat)
-      sqrd<-(dx*dx)+(dy*dy)
-      d<-mean(sqrt(sqrd))
-      return (d)
-    },simplify = T)
-    sigma<-sd(distances)
-    #get minimum distances between the grid and the presence samples
-    if(model_projection == TRUE){
-      mindistance<-sapply(1:length(grid_of_pointssp$probability), function(i){
-        p_long<-grid_of_pointssp$x[i]
-        p_lat<-grid_of_pointssp$y[i]
+    # Native Distribution
+    if (nativedistribution){
+      cat("\nSTEP 2b: Adjusting the projection for native distribution...\n")
+      #calculate average distances between the samples
+      distances<-sapply(1:length(presence$longitude_res), function(i){
+        p_long<-presence$longitude_res[i]
+        p_lat<-presence$latitude_res[i]
         dx<-(presence$longitude_res-p_long)
-        dy<-(presence$latitude-p_lat)
+        dy<-(presence$latitude_res-p_lat)
         sqrd<-(dx*dx)+(dy*dy)
-        d<-min(sqrt(sqrd))
+        d<-mean(sqrt(sqrd))
         return (d)
-      },simplify = T) 
-    }else{
-      mindistance<-sapply(1:length(grid_of_points_w_probability$probability), function(i){
-      p_long<-grid_of_points_w_probability$x[i]
-      p_lat<-grid_of_points_w_probability$y[i]
-      dx<-(presence$longitude_res-p_long)
-      dy<-(presence$latitude_res-p_lat)
-      sqrd<-(dx*dx)+(dy*dy)
-      d<-min(sqrt(sqrd))
-      return (d)
       },simplify = T)
-    }
-    #setup probability weights
-    weights<-dnorm(mindistance,0,sigma)/dnorm(0,0,sigma)
-    weights[which(mindistance<=sigma)]<-1
-    #weight probability by distance from presence points
-    if(model_projection == TRUE){
-      na_points<-which(grid_of_pointssp$probability==-9999)
-      grid_of_pointssp$probability[-na_points]<-grid_of_pointssp$probability[-na_points]*weights[-na_points]
-    }else{
-          na_points<-which(grid_of_points_w_probability$probability==-9999)
-          grid_of_points_w_probability$probability[-na_points]<-grid_of_points_w_probability$probability[-na_points]*weights[-na_points]
+      sigma<-sd(distances)
+      #get minimum distances between the grid and the presence samples
+      if(model_projection == TRUE){
+        mindistance<-sapply(1:length(grid_of_pointssp$probability), function(i){
+          p_long<-grid_of_pointssp$x[i]
+          p_lat<-grid_of_pointssp$y[i]
+          dx<-(presence$longitude_res-p_long)
+          dy<-(presence$latitude-p_lat)
+          sqrd<-(dx*dx)+(dy*dy)
+          d<-min(sqrt(sqrd))
+          return (d)
+        },simplify = T) 
+      }else{
+        mindistance<-sapply(1:length(grid_of_points_w_probability$probability), function(i){
+          p_long<-grid_of_points_w_probability$x[i]
+          p_lat<-grid_of_points_w_probability$y[i]
+          dx<-(presence$longitude_res-p_long)
+          dy<-(presence$latitude_res-p_lat)
+          sqrd<-(dx*dx)+(dy*dy)
+          d<-min(sqrt(sqrd))
+          return (d)
+        },simplify = T)
+      }
+      #setup probability weights
+      weights<-dnorm(mindistance,0,sigma)/dnorm(0,0,sigma)
+      weights[which(mindistance<=sigma)]<-1
+      #weight probability by distance from presence points
+      if(model_projection == TRUE){
+        na_points<-which(grid_of_pointssp$probability==-9999)
+        grid_of_pointssp$probability[-na_points]<-grid_of_pointssp$probability[-na_points]*weights[-na_points]
+      }else{
+        na_points<-which(grid_of_points_w_probability$probability==-9999)
+        grid_of_points_w_probability$probability[-na_points]<-grid_of_points_w_probability$probability[-na_points]*weights[-na_points]
       }
     }
-      
-  #WRITE THE ASC file
-  cat("\nSTEP 3: Projecting the SVM...\n")
-  if(model_projection == TRUE){
-    ypoints<-unique(grid_of_pointssp$y)
-    xpoints<-unique(grid_of_pointssp$x) 
-  }else{ 
-  ypoints<-unique(grid_of_points$y)
-  xpoints<-unique(grid_of_points$x)
-  }
-  ncol_r<-length(xpoints)
-  nrow_r<-length(ypoints)
-  #create a new raster with the same extent and resolution of the first layer
-  ro <- raster(ncol=ncol_r, nrow=nrow_r)
-  length(values(ro))
-  
-  res(ro) <- resolution
-  length(values(ro))
-  extent(ro)<-extent(first_raster_data)
-  #populate the matrix
-  values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
-  row_counter<-1
-  for (y_c in 1:(nrow_r)){
-    yp<-ypoints[y_c]
+    
+    #WRITE THE ASC file
+    cat("\nSTEP 3: Projecting the SVM...\n")
     if(model_projection == TRUE){
-      row_rast<-grid_of_pointssp[which(grid_of_points$y == yp),]
-      
-    }else{
-    row_rast<-grid_of_points_w_probability[which(grid_of_points$y == yp),]
+      ypoints<-unique(grid_of_pointssp$y)
+      xpoints<-unique(grid_of_pointssp$x) 
+    }else{ 
+      ypoints<-unique(grid_of_points$y)
+      xpoints<-unique(grid_of_points$x)
     }
-    row_rast<-row_rast[order(row_rast$x),]
-    values[(nrow_r-row_counter+1),]<-row_rast$probability[1:(ncol_r)]
-    row_counter<-row_counter+1
-  }
-  values_vec<-as.vector(t(values))
-  
-  values(ro)<-values_vec
-  NAvalue(ro)<- -9999
-  
-  #save the raster
-  cat("Writing the output..\n")
-  writeRaster(ro, filename=raster_out_file_name_SVM, format="ascii",overwrite=TRUE)
-  svm_out_file_name = paste0(output_folder,"/SVM/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_svm.Rdata")
-  if(Create_SVM_Rdata){
-  save(svmfit, file=svm_out_file_name)  #this line save also the ANN to be used on another set of Environmental parameter
-  }
-  cat("ID",ID," SVM done.\n")
+    ncol_r<-length(xpoints)
+    nrow_r<-length(ypoints)
+    #create a new raster with the same extent and resolution of the first layer
+    ro <- raster(ncol=ncol_r, nrow=nrow_r)
+    length(values(ro))
+    
+    res(ro) <- resolution
+    length(values(ro))
+    extent(ro)<-extent(first_raster_data)
+    #populate the matrix
+    values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
+    row_counter<-1
+    for (y_c in 1:(nrow_r)){
+      yp<-ypoints[y_c]
+      if(model_projection == TRUE){
+        row_rast<-grid_of_pointssp[which(grid_of_points$y == yp),]
+        
+      }else{
+        row_rast<-grid_of_points_w_probability[which(grid_of_points$y == yp),]
+      }
+      row_rast<-row_rast[order(row_rast$x),]
+      values[(nrow_r-row_counter+1),]<-row_rast$probability[1:(ncol_r)]
+      row_counter<-row_counter+1
+    }
+    values_vec<-as.vector(t(values))
+    
+    values(ro)<-values_vec
+    NAvalue(ro)<- -9999
+    
+    #save the raster
+    cat("Writing the output..\n")
+    writeRaster(ro, filename=raster_out_file_name_SVM, format="ascii",overwrite=TRUE)
+    svm_out_file_name = paste0(output_folder,"/SVM/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_svm.Rdata")
+    if(Create_SVM_Rdata){
+      save(svmfit, file=svm_out_file_name)  #this line save also the ANN to be used on another set of Environmental parameter
+    }
+    cat("ID",ID," SVM done.\n")
   }
   
   if(ANN_Active==TRUE){
-  grid_of_points_enriched_proj_ANN<-subset(grid_of_points_enriched, select = -c(x, y))
+    grid_of_points_enriched_proj_ANN<-subset(grid_of_points_enriched, select = -c(x, y))
     
-  if(model_projection==FALSE){
-  cat("Step 4: ANN training with multiple hidden layers\n")
-  training_set_features_only_ANN<-subset(training_set, select = -c(x, y))
-  f <- as.formula(paste("t", "~", paste(input_column_names_codes, collapse = " + ") ))
-  set.seed(20)
-  
-  #initialise features that will record the optimal scores
-  super_hidden<-0
-  super_accuracy<-0
-  super_accuracy_self<-0
-  super_threshold<-0
-  super_nn<-NA    
-  
-  #for each hidden layer to test: train the ANN and self-test
-  for (hidden in hiddens){
-    hidden<-c(hidden)
-    cat("Testing hidden neurons =",hidden,"\n")
-    #train the ANN with the hidden neurons
-    nn <- neuralnet(f,data = training_set_features_only_ANN,hidden = hidden, threshold = thld, stepmax = stp, rep = rp, act.fct = act.fct, linear.output = FALSE, lifesign = "minimal", algorithm = alg) 
-    # Compute predictions on the training data
-    pr.nn1<- compute(nn, training_set_features_only_ANN[,1:length(input_column_names_codes)]) 
-    training_set_features_only_ANN$pred<- pr.nn1$net.result
-    #test multiple decision thresholds based on the values over the training set
-    decision_thresholds<-as.numeric(quantile(training_set_features_only_ANN$pred,probs=c(0.01,0.05,0.1,0.2,0.5,0.8))) #take 1% of the training set out
-    opt_accuracy<-0
-    opt_threshold<-0
-    #loop on decision thresholds testing
-    for (decision_threshold in decision_thresholds){
-      training_set_features_only_ANN$detected<-F
-      training_set_features_only_ANN$detected[which( (training_set_features_only_ANN$t ==0 & training_set_features_only_ANN$pred<decision_threshold) | 
-                                                   (training_set_features_only_ANN$t ==1 & training_set_features_only_ANN$pred>decision_threshold) ) ]<-T
-      accuracy<- length(which(training_set_features_only_ANN$detected))/length(training_set_features_only_ANN$detected)
-      #record the best threshold and gained accuracy
-      if (opt_accuracy<accuracy){
-        opt_accuracy=accuracy
-        opt_threshold<-decision_threshold
-      }
-      #cat("Accuracy selftest =", accuracy*100,"%","(thr:",decision_threshold,")","\n")
-    }#end loop on decision thresholds
-    opt_accuracy_self<-opt_accuracy
-    cat("Optimal accuracy selftest =", opt_accuracy*100,"%","(thr:",opt_threshold,")","hidden neurons:",hidden,"\n")
-    
-    
-    #if nfold>0 do cross validation with 95%-5% approach
-    if (nfold>0){
-      cat("Cross-validating..\n")
-      proportion <- 0.95 # Set to 0.995 for LOOCV
-      accuracies <- NULL
-      #for each fold, select a random (95%) subset for training and another (5%) for testing
-      for(i in 1:nfold) {
-        cat(i," ")
-        #random selection of training and testing rows
-        index    <- sample(1:nrow(training_set_features_only_ANN), round(proportion*nrow(training_set_features_only_ANN)))
-        train_cv <- training_set_features_only_ANN[index, ]
-        test_cv  <- training_set_features_only_ANN[-index, ]
-        #ANN training
-        nn_cv    <- neuralnet(f,data = train_cv,hidden = hidden,threshold = thld,stepmax = stp,rep = rp,act.fct = act.fct,linear.output = FALSE,algorithm = alg)
-        pr.nn1     <- compute(nn, test_cv[,1:length(input_column_names_codes)]) 
-        test_cv$pred    <- pr.nn1$net.result
-        decision_thresholds<-as.numeric(quantile(test_cv$pred,probs=c(0.01,0.05,0.1,0.2,0.5,0.8))) #take 1% of the training set out
-        #take the best threshold and accuracy
-        opt_accuracy_cv<-0
+    if(model_projection==FALSE){
+      cat("Step 4: ANN training with multiple hidden layers\n")
+      training_set_features_only_ANN<-subset(training_set, select = -c(x, y))
+      f <- as.formula(paste("t", "~", paste(input_column_names_codes, collapse = " + ") ))
+      set.seed(20)
+      
+      #initialise features that will record the optimal scores
+      super_hidden<-0
+      super_accuracy<-0
+      super_accuracy_self<-0
+      super_threshold<-0
+      super_nn<-NA    
+      
+      #for each hidden layer to test: train the ANN and self-test
+      for (hidden in hiddens){
+        hidden<-c(hidden)
+        cat("Testing hidden neurons =",hidden,"\n")
+        #train the ANN with the hidden neurons
+        nn <- neuralnet(f,data = training_set_features_only_ANN,hidden = hidden, threshold = thld, stepmax = stp, rep = rp, act.fct = act.fct, linear.output = FALSE, lifesign = "minimal", algorithm = alg) 
+        # Compute predictions on the training data
+        pr.nn1<- compute(nn, training_set_features_only_ANN[,1:length(input_column_names_codes)]) 
+        training_set_features_only_ANN$pred<- pr.nn1$net.result
+        #test multiple decision thresholds based on the values over the training set
+        decision_thresholds<-as.numeric(quantile(training_set_features_only_ANN$pred,probs=c(0.01,0.05,0.1,0.2,0.5,0.8))) #take 1% of the training set out
+        opt_accuracy<-0
+        opt_threshold<-0
         #loop on decision thresholds testing
         for (decision_threshold in decision_thresholds){
-          test_cv$detected<-F
-          test_cv$detected[which( (test_cv$t ==0 & test_cv$pred<decision_threshold) | 
-                                    (test_cv$t ==1 & test_cv$pred>decision_threshold) ) ]<-T
-          accuracy_cv   <- length(which(test_cv$detected))/length(test_cv$detected)
-          if (opt_accuracy_cv<accuracy_cv){
-            opt_accuracy_cv=accuracy_cv
+          training_set_features_only_ANN$detected<-F
+          training_set_features_only_ANN$detected[which( (training_set_features_only_ANN$t ==0 & training_set_features_only_ANN$pred<decision_threshold) | 
+                                                           (training_set_features_only_ANN$t ==1 & training_set_features_only_ANN$pred>decision_threshold) ) ]<-T
+          accuracy<- length(which(training_set_features_only_ANN$detected))/length(training_set_features_only_ANN$detected)
+          #record the best threshold and gained accuracy
+          if (opt_accuracy<accuracy){
+            opt_accuracy=accuracy
+            opt_threshold<-decision_threshold
           }
+          #cat("Accuracy selftest =", accuracy*100,"%","(thr:",decision_threshold,")","\n")
         }#end loop on decision thresholds
-        accuracies[i]   <- opt_accuracy_cv
-      }#end loop on folds  
-      mean_accuracy_cv <- mean(accuracies)
-      cat("\nCrossvalidation accuracy =",mean_accuracy_cv,"(min",min(accuracies),", max",max(accuracies),")\n\n")
-      opt_accuracy<-mean_accuracy_cv
-    }#end nfold>0
-    
-    #if the current nfold is the optimal among all models record it
-    if (super_accuracy<opt_accuracy){
-      super_accuracy<-opt_accuracy
-      super_threshold<-opt_threshold #the optimal threshold will be the one on the training set
-      super_accuracy_self<-opt_accuracy_self
-      super_hidden<-hidden #record the optimal number of hidden layers
-      super_nn<-nn
-    }
-  }#end loop on hidden layers
-  
-  cat("Results for",ID,":",
-      "Optimal overall accuracy nfold =", super_accuracy*100,"%","(nfold =",nfold,")",
-      "Optimal overall accuracy selftest =", super_accuracy_self*100,"%","(thr:",super_threshold,")","hidden neurons:",super_hidden,"\n")
-  
-  #project the optimal ANN on the grid
-  pr.nn_grid<- compute(super_nn, grid_of_points_enriched_proj_ANN)
-  grid_of_points$probability<-pr.nn_grid$net.result
-  grid_of_points[rowSums(is.na(grid_of_points)) > 0,3]<- -9999
-  
-  #WRITE METADATA AND OUTPUT
-  fileConn<-file(paste0(output_folder,"/ANN/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
-  writeLines(c(
-    paste0("ID name = ",ID),
-    paste0("Optimal overall accuracy nfold = ",super_accuracy),
-    paste0("Native distribution = ",nativedistribution),
-    paste0("Number of folders of cross validation = ",nfold),
-    paste0("Optimal overall accuracy selftest = ",super_accuracy_self),
-    paste0("Optimal decision threshold = ",super_threshold),
-    paste0("Optimal number of neurons = ",super_hidden),
-    paste0("Spatial resolution = ",resolution),
-    paste0("rp = ",rp),
-    paste0("thld = ",thld),
-    paste0("stp = ",stp),
-    paste0("alg = ",alg),
-    paste0("act.fct = ",act.fct)
-  ), fileConn)
-  close(fileConn)
-  }else{
-    cat("Step 4: ANN projection session\n")
-    raster_out_file_name = paste0(output_folder,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
-    neural_out_file_name = paste0(trained_neural_networks,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_ann.Rdata")
-    metadata_file<-paste0(trained_neural_networks,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt")
-    metadata_output_file<-paste0(output_folder,"/ANN/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt")
-    
-    load(neural_out_file_name)
-    
-    if(file.exists(raster_out_file_name)){
-      cat("Skipping\n")
-      next
-    }
-    #OCCURRENCE ENRICHMENT AND GRID PREPARATION
-    cat("Step 1: Occurrence enrichment and grid preparation\n")
-    presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
-    presence<-read.table(paste0(presence_data_folder,"/",presence_file),header = TRUE, sep=",")
-    presence$longitude_res<-coordinate_at_res(origin = min_x_in_raster,coordinate = presence$longitude, resolution = resolution)
-    presence$latitude_res<-coordinate_at_res(origin = min_y_in_raster,coordinate = presence$latitude, resolution = resolution)
-    
-    #project the optimal ANN on the grid
-    pr.nn_grid<- compute(super_nn, grid_of_points_enriched_proj_ANN)
-    grid_of_pointssp<-grid_of_points
-    grid_of_pointssp$probability<-pr.nn_grid$net.result
-    grid_of_pointssp[rowSums(is.na(grid_of_pointssp)) > 0,3]<- -9999
-    
-    #WRITE METADATA AND OUTPUT
-    fileConn<-file.copy(from = metadata_file, to = metadata_output_file)
-    
-    
-  }
-  if (nativedistribution){
-    cat("\nSTEP 4b: Adjusting the projection for native distribution...\n")
-    #calculate average distances between the samples
-    distances<-sapply(1:length(presence$longitude_res), function(i){
-      p_long<-presence$longitude_res[i]
-      p_lat<-presence$latitude_res[i]
-      dx<-(presence$longitude_res-p_long)
-      dy<-(presence$latitude_res-p_lat)
-      sqrd<-(dx*dx)+(dy*dy)
-      d<-mean(sqrt(sqrd))
-      return (d)
-    },simplify = T)
-    sigma<-sd(distances)
-    
-    #get minimum distances between the grid and the presence samples
-    
-    if(model_projection==FALSE){ 
-    
-    mindistance<-sapply(1:length(grid_of_points$probability), function(i){
-      p_long<-grid_of_points$x[i]
-      p_lat<-grid_of_points$y[i]
-      dx<-(presence$longitude_res-p_long)
-      dy<-(presence$latitude_res-p_lat)
-      sqrd<-(dx*dx)+(dy*dy)
-      d<-min(sqrt(sqrd))
-      return (d)
-    },simplify = T)
+        opt_accuracy_self<-opt_accuracy
+        cat("Optimal accuracy selftest =", opt_accuracy*100,"%","(thr:",opt_threshold,")","hidden neurons:",hidden,"\n")
+        
+        
+        #if nfold>0 do cross validation with 95%-5% approach
+        if (nfold>0){
+          cat("Cross-validating..\n")
+          proportion <- 0.95 # Set to 0.995 for LOOCV
+          accuracies <- NULL
+          #for each fold, select a random (95%) subset for training and another (5%) for testing
+          for(i in 1:nfold) {
+            cat(i," ")
+            #random selection of training and testing rows
+            index    <- sample(1:nrow(training_set_features_only_ANN), round(proportion*nrow(training_set_features_only_ANN)))
+            train_cv <- training_set_features_only_ANN[index, ]
+            test_cv  <- training_set_features_only_ANN[-index, ]
+            #ANN training
+            nn_cv    <- neuralnet(f,data = train_cv,hidden = hidden,threshold = thld,stepmax = stp,rep = rp,act.fct = act.fct,linear.output = FALSE,algorithm = alg)
+            pr.nn1     <- compute(nn, test_cv[,1:length(input_column_names_codes)]) 
+            test_cv$pred    <- pr.nn1$net.result
+            decision_thresholds<-as.numeric(quantile(test_cv$pred,probs=c(0.01,0.05,0.1,0.2,0.5,0.8))) #take 1% of the training set out
+            #take the best threshold and accuracy
+            opt_accuracy_cv<-0
+            #loop on decision thresholds testing
+            for (decision_threshold in decision_thresholds){
+              test_cv$detected<-F
+              test_cv$detected[which( (test_cv$t ==0 & test_cv$pred<decision_threshold) | 
+                                        (test_cv$t ==1 & test_cv$pred>decision_threshold) ) ]<-T
+              accuracy_cv   <- length(which(test_cv$detected))/length(test_cv$detected)
+              if (opt_accuracy_cv<accuracy_cv){
+                opt_accuracy_cv=accuracy_cv
+              }
+            }#end loop on decision thresholds
+            accuracies[i]   <- opt_accuracy_cv
+          }#end loop on folds  
+          mean_accuracy_cv <- mean(accuracies)
+          cat("\nCrossvalidation accuracy =",mean_accuracy_cv,"(min",min(accuracies),", max",max(accuracies),")\n\n")
+          opt_accuracy<-mean_accuracy_cv
+        }#end nfold>0
+        
+        #if the current nfold is the optimal among all models record it
+        if (super_accuracy<opt_accuracy){
+          super_accuracy<-opt_accuracy
+          super_threshold<-opt_threshold #the optimal threshold will be the one on the training set
+          super_accuracy_self<-opt_accuracy_self
+          super_hidden<-hidden #record the optimal number of hidden layers
+          super_nn<-nn
+        }
+      }#end loop on hidden layers
+      
+      cat("Results for",ID,":",
+          "Optimal overall accuracy nfold =", super_accuracy*100,"%","(nfold =",nfold,")",
+          "Optimal overall accuracy selftest =", super_accuracy_self*100,"%","(thr:",super_threshold,")","hidden neurons:",super_hidden,"\n")
+      
+      #project the optimal ANN on the grid
+      pr.nn_grid<- compute(super_nn, grid_of_points_enriched_proj_ANN)
+      grid_of_points$probability<-pr.nn_grid$net.result
+      grid_of_points[rowSums(is.na(grid_of_points)) > 0,3]<- -9999
+      
+      #WRITE METADATA AND OUTPUT
+      fileConn<-file(paste0(output_folder,"/ANN/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
+      writeLines(c(
+        paste0("ID name = ",ID),
+        paste0("Optimal overall accuracy nfold = ",super_accuracy),
+        paste0("Native distribution = ",nativedistribution),
+        paste0("Number of folders of cross validation = ",nfold),
+        paste0("Optimal overall accuracy selftest = ",super_accuracy_self),
+        paste0("Optimal decision threshold = ",super_threshold),
+        paste0("Optimal number of neurons = ",super_hidden),
+        paste0("Spatial resolution = ",resolution),
+        paste0("rp = ",rp),
+        paste0("thld = ",thld),
+        paste0("stp = ",stp),
+        paste0("alg = ",alg),
+        paste0("act.fct = ",act.fct)
+      ), fileConn)
+      close(fileConn)
     }else{
-      mindistance<-sapply(1:length(grid_of_pointssp$probability), function(i){
-        p_long<-grid_of_pointssp$x[i]
-        p_lat<-grid_of_pointssp$y[i]
+      cat("Step 4: ANN projection session\n")
+      raster_out_file_name = paste0(output_folder,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
+      neural_out_file_name = paste0(trained_neural_networks,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_ann.Rdata")
+      metadata_file<-paste0(trained_neural_networks,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt")
+      metadata_output_file<-paste0(output_folder,"/ANN/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt")
+      
+      load(neural_out_file_name)
+      
+      if(file.exists(raster_out_file_name)){
+        cat("Skipping\n")
+        next
+      }
+      #OCCURRENCE ENRICHMENT AND GRID PREPARATION
+      cat("Step 1: Occurrence enrichment and grid preparation\n")
+      presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
+      presence<-read.table(paste0(presence_data_folder,"/",presence_file),header = TRUE, sep=",")
+      presence$longitude_res<-coordinate_at_res(origin = min_x_in_raster,coordinate = presence$longitude, resolution = resolution)
+      presence$latitude_res<-coordinate_at_res(origin = min_y_in_raster,coordinate = presence$latitude, resolution = resolution)
+      
+      #project the optimal ANN on the grid
+      pr.nn_grid<- compute(super_nn, grid_of_points_enriched_proj_ANN)
+      grid_of_pointssp<-grid_of_points
+      grid_of_pointssp$probability<-pr.nn_grid$net.result
+      grid_of_pointssp[rowSums(is.na(grid_of_pointssp)) > 0,3]<- -9999
+      
+      #WRITE METADATA AND OUTPUT
+      fileConn<-file.copy(from = metadata_file, to = metadata_output_file)
+      
+      
+    }
+    if (nativedistribution){
+      cat("\nSTEP 4b: Adjusting the projection for native distribution...\n")
+      #calculate average distances between the samples
+      distances<-sapply(1:length(presence$longitude_res), function(i){
+        p_long<-presence$longitude_res[i]
+        p_lat<-presence$latitude_res[i]
         dx<-(presence$longitude_res-p_long)
-        dy<-(presence$latitude-p_lat)
+        dy<-(presence$latitude_res-p_lat)
         sqrd<-(dx*dx)+(dy*dy)
-        d<-min(sqrt(sqrd))
+        d<-mean(sqrt(sqrd))
         return (d)
       },simplify = T)
+      sigma<-sd(distances)
       
-    }
-    #setup probability weights
-    weights<-dnorm(mindistance,0,sigma)/dnorm(0,0,sigma)
-    weights[which(mindistance<=sigma)]<-1
-    #weight probability by distance from presence points
-    if(model_projection==FALSE){ 
-    na_points<-which(grid_of_points$probability==-9999)
-    grid_of_points$probability[-na_points]<-grid_of_points$probability[-na_points]*weights[-na_points]
-    }else{
-    na_points<-which(grid_of_pointssp$probability==-9999)
-    grid_of_pointssp$probability[-na_points]<-grid_of_pointssp$probability[-na_points]*weights[-na_points]     
+      #get minimum distances between the grid and the presence samples
+      
+      if(model_projection==FALSE){ 
+        
+        mindistance<-sapply(1:length(grid_of_points$probability), function(i){
+          p_long<-grid_of_points$x[i]
+          p_lat<-grid_of_points$y[i]
+          dx<-(presence$longitude_res-p_long)
+          dy<-(presence$latitude_res-p_lat)
+          sqrd<-(dx*dx)+(dy*dy)
+          d<-min(sqrt(sqrd))
+          return (d)
+        },simplify = T)
+      }else{
+        mindistance<-sapply(1:length(grid_of_pointssp$probability), function(i){
+          p_long<-grid_of_pointssp$x[i]
+          p_lat<-grid_of_pointssp$y[i]
+          dx<-(presence$longitude_res-p_long)
+          dy<-(presence$latitude-p_lat)
+          sqrd<-(dx*dx)+(dy*dy)
+          d<-min(sqrt(sqrd))
+          return (d)
+        },simplify = T)
+        
+      }
+      #setup probability weights
+      weights<-dnorm(mindistance,0,sigma)/dnorm(0,0,sigma)
+      weights[which(mindistance<=sigma)]<-1
+      #weight probability by distance from presence points
+      if(model_projection==FALSE){ 
+        na_points<-which(grid_of_points$probability==-9999)
+        grid_of_points$probability[-na_points]<-grid_of_points$probability[-na_points]*weights[-na_points]
+      }else{
+        na_points<-which(grid_of_pointssp$probability==-9999)
+        grid_of_pointssp$probability[-na_points]<-grid_of_pointssp$probability[-na_points]*weights[-na_points]     
       }
     }   
-  
-  #WRITE THE ASC file
-  cat("\nSTEP 5: Projecting the ANN...\n")
-  #raster_out_file_name = paste0(output_folder,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
-  #define the grid points to populate the dataset
-  if(model_projection==FALSE){  
-  ypoints<-unique(grid_of_points$y)
-  xpoints<-unique(grid_of_points$x)
-  }else{
-    ypoints<-unique(grid_of_pointssp$y)
-    xpoints<-unique(grid_of_pointssp$x)   
     
-  }
-  ncol_r<-length(xpoints)
-  nrow_r<-length(ypoints)
-  #create a new raster with the same extent and resolution of the first layer
-  ro <- raster(ncol=ncol_r, nrow=nrow_r)
-  length(values(ro))
-  
-  res(ro) <- resolution
-  length(values(ro))
-  extent(ro)<-extent(first_raster_data)
-  #populate the matrix
-  values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
-  row_counter<-1
-  for (y_c in 1:(nrow_r)){
-    yp<-ypoints[y_c]
-    if(model_projection==FALSE){    
-    row_rast<-grid_of_points[which(grid_of_points$y == yp),]
+    #WRITE THE ASC file
+    cat("\nSTEP 5: Projecting the ANN...\n")
+    #raster_out_file_name = paste0(output_folder,"/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , ".asc")
+    #define the grid points to populate the dataset
+    if(model_projection==FALSE){  
+      ypoints<-unique(grid_of_points$y)
+      xpoints<-unique(grid_of_points$x)
     }else{
-    row_rast<-grid_of_pointssp[which(grid_of_points$y == yp),]
-    }
-    row_rast<-row_rast[order(row_rast$x),]
-    values[(nrow_r-row_counter+1),]<-row_rast$probability[1:(ncol_r)]
-    row_counter<-row_counter+1
-  }
-  values_vec<-as.vector(t(values))
-  values(ro)<-values_vec
-  NAvalue(ro)<- -9999
-  #plot(ro)
-  
-  #save the raster
-  cat("Writing the output..\n")
-  writeRaster(ro, filename=raster_out_file_name_ANN, format="ascii",overwrite=TRUE)
-  neural_out_file_name = paste0(output_folder,"/ANN/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_ann.Rdata")
-  if(Create_ANN_Rdata){
-  save(super_nn, file=neural_out_file_name) #this line save also the ANN to be used on another set of Environmental parameter
-  }
-  cat("ID",ID,"ANN done.\n")
-  }   
+      ypoints<-unique(grid_of_pointssp$y)
+      xpoints<-unique(grid_of_pointssp$x)   
       
+    }
+    ncol_r<-length(xpoints)
+    nrow_r<-length(ypoints)
+    #create a new raster with the same extent and resolution of the first layer
+    ro <- raster(ncol=ncol_r, nrow=nrow_r)
+    length(values(ro))
+    
+    res(ro) <- resolution
+    length(values(ro))
+    extent(ro)<-extent(first_raster_data)
+    #populate the matrix
+    values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
+    row_counter<-1
+    for (y_c in 1:(nrow_r)){
+      yp<-ypoints[y_c]
+      if(model_projection==FALSE){    
+        row_rast<-grid_of_points[which(grid_of_points$y == yp),]
+      }else{
+        row_rast<-grid_of_pointssp[which(grid_of_points$y == yp),]
+      }
+      row_rast<-row_rast[order(row_rast$x),]
+      values[(nrow_r-row_counter+1),]<-row_rast$probability[1:(ncol_r)]
+      row_counter<-row_counter+1
+    }
+    values_vec<-as.vector(t(values))
+    values(ro)<-values_vec
+    NAvalue(ro)<- -9999
+    #plot(ro)
+    
+    #save the raster
+    cat("Writing the output..\n")
+    writeRaster(ro, filename=raster_out_file_name_ANN, format="ascii",overwrite=TRUE)
+    neural_out_file_name = paste0(output_folder,"/ANN/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_ann.Rdata")
+    if(Create_ANN_Rdata){
+      save(super_nn, file=neural_out_file_name) #this line save also the ANN to be used on another set of Environmental parameter
+    }
+    cat("ID",ID,"ANN done.\n")
+  }   
+  
   if(AQUAMAPS_Active == TRUE){
     aqprob<-function(value,f_index,AQ_quantiles_per_feature){
       quantiles<-AQ_quantiles_per_feature[[f_index]]
-      if (value<as.numeric(quantiles[1])){
+      
+      if (as.numeric(quantiles[1])==as.numeric(quantiles[5])){
+        return (1)
+      } 
+      q1<-as.numeric(quantiles[1])
+      q2<-as.numeric(quantiles[2])
+      q3<-as.numeric(quantiles[3])
+      q4<-as.numeric(quantiles[4])
+      q5<-as.numeric(quantiles[5])
+      q1<-q1-0.2*abs(q1)
+      q2<-q2-0.2*abs(q2)
+      q4<-q4+0.2*abs(q4)
+      q5<-q5+0.2*abs(q5)
+      
+      if (value<q1){
         return (0)
       }
-      if (value>as.numeric(quantiles[5])){
+      if (value>q5){
         return (0)
       }
-      if (value<as.numeric(quantiles[2])){
-        if (as.numeric(quantiles[2]) == as.numeric(quantiles[1]) )
+      if (value<q2){
+        if (q2 == q1)
           y = 1
         else
-          y<-(value-as.numeric(quantiles[1]))/( as.numeric(quantiles[2])-as.numeric(quantiles[1]) )
-      }else if (value<=as.numeric(quantiles[4])){
+          y<-(value-q1)/(q2-q1)
+      }else if (value<=q4){
         return (1)
+      }else if (value==q5){
+        return (0)
       }else{
-        if (as.numeric(quantiles[4]) == as.numeric(quantiles[5]) )
+        if (q4==q5)
           y =1
         else
-          y<-( (as.numeric(quantiles[4])-value) /( as.numeric(quantiles[5])-as.numeric(quantiles[4]) ) ) +1
+          y<-((q4-value)/(q5-q4)) +1
       }
     }
     
@@ -829,21 +845,21 @@ for (ID in all_IDs){
     
     #WRITE METADATA AQ
     fileConn<-file(paste0(output_folder,"/AquaMaps/",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "_metadata.txt"))
-      writeLines(c(
-        paste0("ID name = ",ID),
-        paste0("Spatial resolution = ",resolution),
-        paste0("Optimal decision threshold = 0.6")
-      ), fileConn)
-      close(fileConn)  
+    writeLines(c(
+      paste0("ID name = ",ID),
+      paste0("Spatial resolution = ",resolution),
+      paste0("Optimal decision threshold = 0.6")
+    ), fileConn)
+    close(fileConn)  
     
     # Native Distribution
     if (nativedistribution){
       cat("\nSTEP 6b: Adjusting AquaMaps for native distribution...\n")
       presence_aq<-
-        minx_aqm<-min(presence$longitude_res)
-      maxx_aqm<-max(presence$longitude_res)
-      miny_aqm<-min(presence$latitude_res)
-      maxy_aqm<-max(presence$latitude_res)
+        minx_aqm<-min(presence$longitude_res)-0.2*abs(min(presence$longitude_res))
+      maxx_aqm<-max(presence$longitude_res)+0.2*abs(max(presence$longitude_res))
+      miny_aqm<-min(presence$latitude_res)-0.2*abs(min(presence$latitude_res))
+      maxy_aqm<-max(presence$latitude_res)+0.2*abs(max(presence$latitude_res))
       grid_of_points_AQ$probability[which((grid_of_points_AQ$x<minx_aqm) | (grid_of_points_AQ$x>maxx_aqm))]<--9999
       grid_of_points_AQ$probability[which((grid_of_points_AQ$y<miny_aqm) | (grid_of_points_AQ$y>maxy_aqm))]<--9999
     }
