@@ -112,4 +112,4 @@ values(ro)<-values_vec
 NAvalue(ro)<- -9999
 
 #save the raster
-writeRaster(ro, filename=paste0(output_folder,"/Threshold",TS,"_",index,".csv"), format="ascii",overwrite=TRUE)
+writeRaster(ro, filename=paste0(output_folder,"/",index,"_ensembleThd_",TS,".csv"), format="ascii",overwrite=TRUE)

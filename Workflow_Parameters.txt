@@ -22,7 +22,7 @@ EnsambleModeler =F
 AgreementIndex =F
 
 #AgreementIndex name
-index =BioIndex 
+index =BiodiversityIndex
 
 #####################################
 # EcologicalNicheModeler Parameters #
