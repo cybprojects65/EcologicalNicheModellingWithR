@@ -848,7 +848,7 @@ for (ID in all_IDs){
     writeLines(c(
       paste0("ID name = ",ID),
       paste0("Spatial resolution = ",resolution),
-      paste0("Optimal decision threshold = 0.6")
+      paste0("Optimal decision threshold = 0.25")
     ), fileConn)
     close(fileConn)  
     
