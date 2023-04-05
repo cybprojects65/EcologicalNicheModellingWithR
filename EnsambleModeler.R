@@ -24,6 +24,7 @@ if (model_projection == T){
 allmet<-list.dirs(methods_folder, recursive = FALSE)
 presence_data_folder<- allmet[2]
 allmet<-gsub("./ENM/", "", allmet)
+allmet<-gsub("./ENM_p/", "", allmet)
 
 #extract ID list
 all_IDs<-list.files(presence_data_folder)
@@ -42,7 +43,7 @@ for (ID in all_IDs){
   layers<- c()
   for(method in allmet){
     
-    layer <-paste0("ENM","/",method,"/",ID,".asc")  
+    layer <-paste0(methods_folder,"/",method,"/",ID,".asc")
     layers<-append(layers, layer)
   }
   
@@ -53,7 +54,7 @@ for (ID in all_IDs){
   }
   
   #set resolution from metadata
-  BMPFile<- paste0("ENM","/",method,"/",ID,"_metadata.txt")
+  BMPFile<- paste0(methods_folder,"/",method,"/",ID,"_metadata.txt")
   BMPprops <- read.properties(BMPFile)
   resolution<- as.double(BMPprops$"Spatial resolution")
   
@@ -110,7 +111,7 @@ for (ID in all_IDs){
   for(method in allmet){
     
     #thresholds
-    BMPFile<- paste0("ENM","/",method,"/",ID,"_metadata.txt")
+    BMPFile<- paste0(methods_folder,"/",method,"/",ID,"_metadata.txt")
     BMPprops <- read.properties(BMPFile)
     TS<- as.double(BMPprops$"Optimal decision threshold")
     
