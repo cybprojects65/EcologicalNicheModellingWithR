@@ -196,6 +196,8 @@ for (ID in all_IDs){
   ####Grid preparation
   
   if(model_projection == FALSE){
+	if (dim(grid_of_points_enriched)[1]<abs_sample)
+      abs_sample=dim(grid_of_points_enriched)[1]-1											   
     indexa    <- sample(1:dim(grid_of_points_enriched)[1], abs_sample)
     absence1<-grid_of_points_enriched[indexa,]
     absence1$ID<-ID
@@ -466,10 +468,10 @@ for (ID in all_IDs){
     nrow_r<-length(ypoints)
     #create a new raster with the same extent and resolution of the first layer
     ro <- raster(ncol=ncol_r, nrow=nrow_r)
-    length(values(ro))
+    #length(values(ro))
     
-    res(ro) <- resolution
-    length(values(ro))
+    #res(ro) <- resolution
+    #length(values(ro))
     extent(ro)<-extent(first_raster_data)
     #populate the matrix
     values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
@@ -524,7 +526,10 @@ for (ID in all_IDs){
         #train the ANN with the hidden neurons
         nn <- neuralnet(f,data = training_set_features_only_ANN,hidden = hidden, threshold = thld, stepmax = stp, rep = rp, act.fct = act.fct, linear.output = FALSE, lifesign = "minimal", algorithm = alg) 
         # Compute predictions on the training data
-        pr.nn1<- compute(nn, training_set_features_only_ANN[,1:length(input_column_names_codes)]) 
+		if (length(input_column_names_codes)>1)
+          pr.nn1<- compute(nn, training_set_features_only_ANN[,1:length(input_column_names_codes)])
+        else
+          pr.nn1<- compute(nn, training_set_features_only_ANN)												  
         training_set_features_only_ANN$pred<- pr.nn1$net.result
         #test multiple decision thresholds based on the values over the training set
         decision_thresholds<-as.numeric(quantile(training_set_features_only_ANN$pred,probs=c(0.01,0.05,0.1,0.2,0.5,0.8))) #take 1% of the training set out
@@ -561,7 +566,10 @@ for (ID in all_IDs){
             test_cv  <- training_set_features_only_ANN[-index, ]
             #ANN training
             nn_cv    <- neuralnet(f,data = train_cv,hidden = hidden,threshold = thld,stepmax = stp,rep = rp,act.fct = act.fct,linear.output = FALSE,algorithm = alg)
-            pr.nn1     <- compute(nn, test_cv[,1:length(input_column_names_codes)]) 
+			if (length(input_column_names_codes)>1)
+              pr.nn1     <- compute(nn, test_cv[,1:length(input_column_names_codes)]) 
+            else
+              pr.nn1     <- compute(nn, test_cv)
             test_cv$pred    <- pr.nn1$net.result
             decision_thresholds<-as.numeric(quantile(test_cv$pred,probs=c(0.01,0.05,0.1,0.2,0.5,0.8))) #take 1% of the training set out
             #take the best threshold and accuracy
@@ -719,10 +727,10 @@ for (ID in all_IDs){
     nrow_r<-length(ypoints)
     #create a new raster with the same extent and resolution of the first layer
     ro <- raster(ncol=ncol_r, nrow=nrow_r)
-    length(values(ro))
+    #length(values(ro))
     
-    res(ro) <- resolution
-    length(values(ro))
+    #res(ro) <- resolution
+    #length(values(ro))
     extent(ro)<-extent(first_raster_data)
     #populate the matrix
     values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
@@ -825,6 +833,8 @@ for (ID in all_IDs){
     for (i in 1:nrow(grid_of_points_enriched_features_only_AQ)){
       
       featuresrow<-grid_of_points_enriched_features_only_AQ[i,]
+	  if (length(featuresrow)==1)
+        featuresrow<-data.frame(f1=featuresrow)									   
       if (length(which(is.na(featuresrow)))>0){
         probAQ[[listcount]]<--9999
       }else{
@@ -872,9 +882,9 @@ for (ID in all_IDs){
     nrow_r<-length(ypoints)
     #create a new raster with the same extent and resolution of the first layer
     ro <- raster(ncol=ncol_r, nrow=nrow_r)
-    length(values(ro))
-    res(ro) <- resolution
-    length(values(ro))
+    #length(values(ro))
+    #res(ro) <- resolution
+    #length(values(ro))
     extent(ro)<-extent(first_raster_data)
     #populate the matrix
     values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
@@ -934,7 +944,7 @@ for (ID in all_IDs){
       maxent_execution<-system(command, intern = T,
                                ignore.stdout = FALSE, ignore.stderr = FALSE,
                                wait = TRUE, input = NULL, show.output.on.console = TRUE,
-                               minimized = FALSE, invisible = TRUE, timeout = 0)
+                               minimized = FALSE, invisible = TRUE)
       
       execution_success<-(length(which(grepl(pattern="OK MaxEnt",x=maxent_execution)))>0)
       cat("MaxEnt training OK=",execution_success,"\n")
@@ -1064,9 +1074,9 @@ for (ID in all_IDs){
     nrow_r<-length(ypoints)
     #create a new raster with the same extent and resolution of the first layer
     ro <- raster(ncol=ncol_r, nrow=nrow_r)
-    length(values(ro))
-    res(ro) <- resolution
-    length(values(ro))
+    #length(values(ro))
+    #res(ro) <- resolution
+    #length(values(ro))
     extent(ro)<-extent(first_raster_data)
     #populate the matrix
     values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)

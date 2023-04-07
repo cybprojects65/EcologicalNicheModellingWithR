@@ -15,10 +15,10 @@ output_folder="./ENM"
 projection_environmental_layers="./Environmental Parameters 2050 RCP85/"
 output_folder_projection="./ENM_p"
 
-EcologicalNicheModeler =F
-MaxEnt_converter =T
-CSV_converter =T
-EnsambleModeler =F
+EcologicalNicheModeler =T
+MaxEnt_converter =F
+CSV_converter =F
+EnsambleModeler =T
 AgreementIndex =F
 
 #AgreementIndex name
