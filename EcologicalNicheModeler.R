@@ -197,7 +197,7 @@ for (ID in all_IDs){
   
   if(model_projection == FALSE){
 	if (dim(grid_of_points_enriched)[1]<abs_sample)
-      abs_sample=dim(grid_of_points_enriched)[1]-1											   
+      abs_sample=ths_sample											   
     indexa    <- sample(1:dim(grid_of_points_enriched)[1], abs_sample)
     absence1<-grid_of_points_enriched[indexa,]
     absence1$ID<-ID
