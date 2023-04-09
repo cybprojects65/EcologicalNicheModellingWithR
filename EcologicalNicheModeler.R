@@ -974,7 +974,7 @@ for (ID in all_IDs){
       maxent_execution<-system(command, intern = T,
                                ignore.stdout = FALSE, ignore.stderr = FALSE,
                                wait = TRUE, input = NULL, show.output.on.console = TRUE,
-                               minimized = FALSE, invisible = TRUE, timeout = 0)
+                               minimized = FALSE, invisible = TRUE)
       
       execution_success<-(length(which(grepl(pattern="OK MaxEnt",x=maxent_execution)))>0)
       cat("MaxEnt projection OK=",execution_success,"\n")
