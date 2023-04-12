@@ -22,18 +22,13 @@ if (model_projection == T){
 
 #extract methods list
 allmet<-list.dirs(methods_folder, recursive = FALSE)
-presence_data_folder<- allmet[2]
+presence_data_folder<- allmet[1]
 allmet<-gsub("./ENM/", "", allmet)
 allmet<-gsub("./ENM_p/", "", allmet)
 
 #extract ID list
-all_IDs<-list.files(presence_data_folder)
-all_IDs<-gsub("_metadata.txt","",all_IDs)
+all_IDs <- dir(path = presence_data_folder,pattern="*.asc")
 all_IDs<-gsub("\\.asc","",all_IDs)
-all_IDs<-gsub("_ann.Rdata","",all_IDs)
-all_IDs<-gsub("_svm.Rdata","",all_IDs)
-all_IDs<-gsub("_aquamaps.Rdata","",all_IDs)
-all_IDs<-unique(all_IDs)
 
 # ensamble data preparation
 for (ID in all_IDs){
