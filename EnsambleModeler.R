@@ -131,7 +131,7 @@ for (ID in all_IDs){
     counter = counter+1
   }
   
-  data_models<-data[,-c(1:(length(TSs)+2))]
+  data_models<-as.data.frame(data[,-c(1:(length(TSs)+2))])
   sums<-sapply(1:dim(data_models)[1], function(idx){
     data_row<-data_models[idx,]
     naindex<-which(data_row == -9999)
