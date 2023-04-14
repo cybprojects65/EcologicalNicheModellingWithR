@@ -298,7 +298,7 @@ for (ID in all_IDs){
       opt_threshold<-0
       
       
-      tuned <- tune(svm, t ~., data = training_set_features_only_SVM,ranges=list(kernel=kernellist, cost = costlist, gamma = gammalist, coef0=coef0list,degree=degreelist), scale = TRUE)
+      tuned <- tune(svm, t ~., data = training_set_features_only_SVM,ranges=list(kernel=kernellist, cost = costlist, gamma = gammalist, coef0=coef0list,degree=degreelist), scale = FALSE)
       print(tuned)
       
       
