@@ -240,6 +240,11 @@ for (ID in all_IDs){
     training_set$t[1:dim(presence_disjoint)[1]]<-1
     training_set<-na.omit(training_set) #delete rows that contain at least one NA
     names(training_set)<-c("x","y",input_column_names_codes,"t")
+	if (length(which(training_set$t==1))==0)
+    {
+      cat("ERROR: no positive examples in the training set!\n")    
+      stop("ERROR: no positive examples in the training set!\n")
+    }
   }
   
   #####
