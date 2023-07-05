@@ -33,9 +33,9 @@ ths_sample =100
 abs_sample =10000 
 nativedistribution =T
 model_projection =F
-SVM_Active =T
-ANN_Active =T
-AQUAMAPS_Active =T
+SVM_Active =F
+ANN_Active =F
+AQUAMAPS_Active =F
 MAXENT_Active =T
 
 ### Artificial Neural Network Parameters ###
@@ -78,6 +78,7 @@ Create_AquaMaps_Rdata =T
 
 ### MaxEnt Parameters ###
 Create_MAXENT_Rdata =T
+maxent_prevalence =0.5
 
 ############################
 # CSV_converter Parameters #

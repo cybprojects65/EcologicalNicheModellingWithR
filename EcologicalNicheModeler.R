@@ -26,7 +26,7 @@ Create_SVM_Rdata <- as.logical(WPFprops$"Create_SVM_Rdata")
 Create_AquaMaps_Rdata <- as.logical(WPFprops$"Create_AquaMaps_Rdata")
 Create_MAXENT_Rdata <- as.logical(WPFprops$"Create_MAXENT_Rdata")
 model_projection <- as.logical(WPFprops$"model_projection")
-
+maxent_prevalence<-as.numeric(WPFprops$"maxent_prevalence")
 
 if (model_projection){
   output_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder_projection)
@@ -232,8 +232,8 @@ for (ID in all_IDs){
       presence_disjoint <- presence_disjoint[index, ]
     }
     #prepare the presence-absence data frame as the training set
-    coordinates_to_enrich<-rbind(data.frame(x=presence_disjoint$longitude,y=presence_disjoint$latitude),
-                                 data.frame(x=absence_disjoint$longitude,y=absence_disjoint$latitude))
+    coordinates_to_enrich<-rbind(data.frame(x=presence_disjoint$longitude_res,y=presence_disjoint$longitude_res),
+                                 data.frame(x=absence_disjoint$longitude_res,y=absence_disjoint$longitude_res))
     #initialise the training set with just the coordinates
     training_set<-left_join(coordinates_to_enrich, grid_of_points_enriched, by=c("x"= "x","y"="y"))
     training_set$t<-0
@@ -912,7 +912,6 @@ for (ID in all_IDs){
   } #end AquaMaps
   
   if(MAXENT_Active == TRUE){
-    
     meprob<-function(maxentmodel,grid_of_points,ID){
       max_out<-paste0(paste0(maxentmodel,gsub(" ","_",ID)),".asc")
       asc_file<-raster(max_out)
@@ -932,14 +931,16 @@ for (ID in all_IDs){
       return(METS)
     }
     
-    metraining<-function(ID,env_data_folder,output_folder){
-      cat("...training MaxEnt...\n")
+    metraining<-function(ID,env_data_folder,output_folder,prevalence){
+      cat("...training MaxEnt with prevalence =",maxent_prevalence,"...\n")
+
       presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
       presence_data<-paste0(presence_data_folder,"/",presence_file)
       maxent_out<-paste0(output_folder,"/MaxEnt/ME_",paste0(gsub(pattern = " ",replacement = "_",x = ID)) , "/")
+      
       if(!dir.exists(maxent_out)) dir.create(maxent_out)
       
-      command<-paste0("java -jar ./max_ent_cyb.jar \"",presence_data,"\" \"",env_data_folder, "/\" \"",maxent_out,"\"")
+      command<-paste0("java -jar ./max_ent_cyb.jar \"",presence_data,"\" \"",env_data_folder, "/\" \"",maxent_out,"\" ",prevalence)
       
       maxent_execution<-system(command, intern = T,
                                ignore.stdout = FALSE, ignore.stderr = FALSE,
@@ -955,7 +956,7 @@ for (ID in all_IDs){
       return(maxent_out)
     }
     
-    meprojecting<-function(maxentmodel,ID,env_data_folder,output_folder){
+    meprojecting<-function(maxentmodel,ID,env_data_folder,output_folder,prevalence){
       
       presence_file<-paste0(paste("Presence",gsub(" ","_",ID),sep = "_"),".csv")
       presence_data<-paste0(presence_data_folder,"/",presence_file)
@@ -969,7 +970,7 @@ for (ID in all_IDs){
       #java -cp max_ent_cyb.jar org.gcube.datanalysis.ecomod.MainProjecting ./Presence_Abudefduf_saxatilis.csv ./env_pars/ ./out_programatic/ ./out_programatic/Abudefduf_saxatilis.lambdas ./env_pars_2050/ ./test.asc
       
       command<-paste0("java -cp max_ent_cyb.jar org.gcube.datanalysis.ecomod.MainProjecting \"",
-                      presence_data,"\" \"",env_data_folder, "/\" \"",maxentmodel,"\" \"",lambda_file,"\" \"",env_data_folder,"\" \"",maxent_out_prj_asc,"\"")
+                      presence_data,"\" \"",env_data_folder, "/\" \"",maxentmodel,"\" \"",lambda_file,"\" \"",env_data_folder,"\" \"",maxent_out_prj_asc,"\" ",prevalence)
       
       maxent_execution<-system(command, intern = T,
                                ignore.stdout = FALSE, ignore.stderr = FALSE,
@@ -1009,10 +1010,10 @@ for (ID in all_IDs){
       if(file.exists(raster_out_file_name_MaxEnt)){
         stop("Cannot overwrite the original file\n")
       }
-      maxentmodel<-meprojecting(maxentmodel,ID,projection_environmental_layers,output_folder)
+      maxentmodel<-meprojecting(maxentmodel,ID,projection_environmental_layers,output_folder,maxent_prevalence)
     }else{
       cat("\nStep 8: MaxEnt training\n")
-      maxentmodel<-metraining(ID,env_data_folder,output_folder)
+      maxentmodel<-metraining(ID,env_data_folder,output_folder,maxent_prevalence)
     }#end else training/projection 
     
     probME<-list()
