@@ -232,8 +232,8 @@ for (ID in all_IDs){
       presence_disjoint <- presence_disjoint[index, ]
     }
     #prepare the presence-absence data frame as the training set
-    coordinates_to_enrich<-rbind(data.frame(x=presence_disjoint$longitude_res,y=presence_disjoint$longitude_res),
-                                 data.frame(x=absence_disjoint$longitude_res,y=absence_disjoint$longitude_res))
+    coordinates_to_enrich<-rbind(data.frame(x=presence_disjoint$longitude_res,y=presence_disjoint$latitude_res),
+                                 data.frame(x=absence_disjoint$longitude_res,y=absence_disjoint$latitude_res))
     #initialise the training set with just the coordinates
     training_set<-left_join(coordinates_to_enrich, grid_of_points_enriched, by=c("x"= "x","y"="y"))
     training_set$t<-0
