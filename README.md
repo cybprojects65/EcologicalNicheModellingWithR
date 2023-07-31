@@ -15,7 +15,7 @@ _Citation_:
 
 _Auxiliary data and information_:
 
-Sample global-scale environmental parameters are given for 2019. Presence data are reported in CSV format in the Presence Records folders. All species data in this folder will automatically be processed and merged in the Biodiversity Index. 
+Sample global-scale environmental parameters are given for 2019. Environmental Parameters 2050 RCP85 contains parameter projections. Presence data are reported in CSV format in the Presence Records folders. All species data in this folder will automatically be processed and merged in the Biodiversity Index. 
 
 A Web Processing Service version is available after free subscription to the D4Science e-Infrastructure (BiodiversityLab Virtual Research Environment):
 
