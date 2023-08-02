@@ -19,7 +19,7 @@ EcologicalNicheModeler =T
 MaxEnt_converter =F
 CSV_converter =F
 EnsambleModeler =T
-AgreementIndex =F
+AgreementIndex =T
 
 #AgreementIndex name
 index =BiodiversityIndex
@@ -33,9 +33,9 @@ ths_sample =100
 abs_sample =10000 
 nativedistribution =T
 model_projection =F
-SVM_Active =F
-ANN_Active =F
-AQUAMAPS_Active =F
+SVM_Active =T
+ANN_Active =T
+AQUAMAPS_Active =T
 MAXENT_Active =T
 
 ### Artificial Neural Network Parameters ###

@@ -302,8 +302,10 @@ for (ID in all_IDs){
       opt_accuracy_self<-0
       opt_threshold<-0
       
-      
-      tuned <- tune(svm, t ~., data = training_set_features_only_SVM,ranges=list(kernel=kernellist, cost = costlist, gamma = gammalist, coef0=coef0list,degree=degreelist), scale = FALSE)
+      cat("SVM tuning (can take long)\n")
+      suppressWarnings({
+        tuned <- tune(svm, t ~., data = training_set_features_only_SVM,ranges=list(kernel=kernellist, cost = costlist, gamma = gammalist, coef0=coef0list,degree=degreelist), scale = FALSE)
+      })
       print(tuned)
       
       
