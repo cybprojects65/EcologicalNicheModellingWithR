@@ -1,6 +1,9 @@
 rm(list=ls(all=TRUE))
 library(properties)
 
+cat("Workflow started at\n")
+print(Sys.time())
+
 ### ENM Workflow Manager ###
 Workflow_Parameters_File <- paste0("./Workflow_Parameters.txt")
 WPFprops <- read.properties(Workflow_Parameters_File)
@@ -32,3 +35,5 @@ if (AgreementIndex == TRUE){
 
 cat("\n All Done.\n")
 
+cat("Workflow ended at\n")
+print(Sys.time())

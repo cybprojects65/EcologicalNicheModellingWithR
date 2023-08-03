@@ -33,6 +33,12 @@ as indicated in the Web interface.
 
 _Instructions_:
 
+The suite works by executing the Workflow_Manager.R script after adding files to local folders used by the workflow.
+
+We suggest to reuse the local folders indicated in the default configuration file to avoid path issues.
+
+The example run (source the Workflow_Manager.R as-it-is in R) takes about 30 minutes, using the default parameters, and processes two species at the global scale. It generates distribution models, ensembles, and an overall overlap index (biodiversity index).
+
 The configuration file (_Workflow_Parameters.txt_) commands the entire workflow. In the following, we report the main parameters:
 
     #environmental data folder containing ASC files:
