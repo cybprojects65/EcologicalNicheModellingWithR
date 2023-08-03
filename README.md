@@ -31,6 +31,12 @@ https://data.d4science.net/MQtR (species occurrence data)
 
 as indicated in the Web interface.
 
+_Requirements_: 
+
+1. Java (a recent JDK or JRE, e.g., https://www.oracle.com/it/java/technologies/javase/jdk11-archive-downloads.html)
+
+2. R Cran libraries: properties, dplyr, raster, neuralnet, e1071
+
 _Instructions_:
 
 The suite works by executing the Workflow_Manager.R script after adding files to local folders used by the workflow.
