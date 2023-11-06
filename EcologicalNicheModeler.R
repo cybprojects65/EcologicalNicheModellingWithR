@@ -218,8 +218,8 @@ for (ID in all_IDs){
     shared_coordinates_pres<-which(presencexy %in% absencexy)
     presence_disjoint<-presence
     absence_disjoint<-absence
-    if (length(shared_coordinates_pres)>0)
-      presence_disjoint<-presence[-shared_coordinates_pres,]
+    #if (length(shared_coordinates_pres)>0)
+     # presence_disjoint<-presence[-shared_coordinates_pres,]
     if (length(shared_coordinates_abs)>0)
       absence_disjoint<-absence[-shared_coordinates_abs,]
     
