@@ -95,6 +95,7 @@ nrow_r<-length(ypoints)
 #create a new raster with the same extent and resolution of the first layer
 ro <- raster(ncol=ncol_r, nrow=nrow_r)
 length(values(ro))
+extent(ro)<-extent(asc_sample)
 
 #populate the matrix
 values<-matrix(nrow = nrow_r,ncol = ncol_r,data = -9999)
