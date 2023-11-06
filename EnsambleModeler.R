@@ -27,7 +27,7 @@ allmet<-gsub("./ENM/", "", allmet)
 allmet<-gsub("./ENM_p/", "", allmet)
 
 #extract ID list
-all_IDs <- dir(path = presence_data_folder,pattern="*.asc")
+all_IDs <- dir(path = presence_data_folder,pattern="*\\.asc")
 all_IDs<-gsub("\\.asc","",all_IDs)
 
 # ensamble data preparation
@@ -158,7 +158,7 @@ for (ID in all_IDs){
   ro <- raster(ncol=ncol_r, nrow=nrow_r)
   length(values(ro))
   
-  res(ro) <- resolution
+  #res(ro) <- resolution
   length(values(ro))
   extent(ro)<-extent(first_raster_data)
   
