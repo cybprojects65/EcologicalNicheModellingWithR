@@ -11,7 +11,7 @@ _Output_: Species distributions per individual model (ASC format), one model-ens
 
 _Citation_: 
 
-#### Coro, G., Sana, L. & Bove, P. An open science automatic workflow for multi-model species distribution estimation. Int J Data Sci Anal (2024). https://doi.org/10.1007/s41060-024-00517-w
+#### Coro, G., Sana, L. & Bove, P. An open science automatic workflow for multi-model species distribution estimation. International Journal of Data Science and Analytics (2024). https://doi.org/10.1007/s41060-024-00517-w
 
 _Auxiliary data and information_:
 
