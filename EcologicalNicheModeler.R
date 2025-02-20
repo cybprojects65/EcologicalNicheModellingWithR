@@ -15,6 +15,7 @@ training_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folde
 output_folder<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$output_folder)
 projection_environmental_layers<-gsub(pattern = "\\\"",replacement = "", x=WPFprops$projection_environmental_layers)
 
+
 dir.create(output_folder, showWarnings = FALSE)
 
 ANN_Active <- as.logical(WPFprops$"ANN_Active")
